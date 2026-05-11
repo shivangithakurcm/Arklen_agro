@@ -25,9 +25,9 @@ class MemberController extends Controller
         'seller_id'       => 'required|string|unique:members,seller_id',
         'first_name'      => 'required|string|max:100',
         'last_name'       => 'required|string|max:100',
-        'contact'         => 'required|string|max:15',
+       'contact'         => 'required|digits:10',        // exactly 10 digits
         'address'         => 'required|string',
-        'aadhar_no'       => 'nullable|string|max:12',
+        'aadhar_no'       => 'nullable|digits:12',   
         'date_of_joining' => 'required|date',
         'sponsor_id'      => 'nullable|string',
         'sponsor_leg'     => 'nullable|in:left,right',
@@ -69,9 +69,9 @@ class MemberController extends Controller
         $request->validate([
             'first_name'      => 'required|string|max:100',
             'last_name'       => 'required|string|max:100',
-            'contact'         => 'required|string|max:15',
-            'address'         => 'nullable|string',
-            'aadhar_no'       => 'nullable|string|max:12',
+            'contact'         => 'required|digits:10',        // exactly 10 digits
+        'address'         => 'required|string',
+        'aadhar_no'       => 'nullable|digits:12',   
             'date_of_joining' => 'required|date',
             'sponsor_id'      => 'nullable|string',
             'position'        => 'nullable|in:left,right',

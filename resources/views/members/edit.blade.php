@@ -63,7 +63,10 @@
             </div>
             <div>
                 <label class="form-label">Contact *</label>
-                <input type="text" name="contact" value="{{ old('contact', $member->contact) }}" required class="form-control">
+                <input type="text" name="contact" value="{{ old('contact', $member->contact) }}"
+                    required class="form-control"
+                    maxlength="10"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
             </div>
             <div>
                 <label class="form-label">Seller ID</label>
@@ -86,7 +89,10 @@
             </div>
             <div>
                 <label class="form-label">Aadhar No</label>
-                <input type="text" name="aadhar_no" maxlength="12" value="{{ old('aadhar_no', $member->aadhar_no) }}" class="form-control">
+                <input type="text" name="aadhar_no" value="{{ old('aadhar_no', $member->aadhar_no) }}"
+                    class="form-control"
+                    maxlength="12"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)">
             </div>
             <div>
                 <label class="form-label">Status</label>
