@@ -1,0 +1,112 @@
+@extends('layouts.app')
+
+@section('title', 'Seller Profile — Arklen Agro')
+@section('page-title', 'Seller Profile')
+
+@section('content')
+
+<div style="max-width:850px;margin:0 auto;">
+
+    {{-- Back Button --}}
+    <div style="margin-bottom:16px;">
+        <a href="{{ route('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    {{-- Profile Card --}}
+    <div class="card card-pad" style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+            @if($member->profile_image)
+                <img src="{{ Storage::url($member->profile_image) }}"
+                    style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--green-200);">
+            @else
+                <div class="avatar" style="width:90px;height:90px;font-size:30px;border-radius:50%;flex-shrink:0;">
+                    {{ $member->initials }}
+                </div>
+            @endif
+            <div style="flex:1;">
+                <h2 style="margin:0 0 8px;color:var(--green-800);">{{ $member->full_name }}</h2>
+                <table style="font-size:13px;">
+                    <tr>
+                        <td style="color:#888;padding:4px 12px 4px 0;">Contact</td>
+                        <td style="font-weight:600;">{{ $member->contact }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#888;padding:4px 12px 4px 0;">Address</td>
+                        <td style="font-weight:600;">{{ $member->address }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#888;padding:4px 12px 4px 0;">Seller ID</td>
+                        <td><span class="badge badge-green">{{ $member->seller_id }}</span></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#888;padding:4px 12px 4px 0;">Sponsor ID</td>
+                        <td style="font-weight:600;">{{ $member->sponsor_id ?? '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div style="align-self:flex-start;">
+                <a href="{{ route('members.edit', $member) }}" class="btn btn-primary">
+                    <i class="fas fa-pen"></i> Edit
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Sponsor Income + Team Income --}}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <div class="stat-card">
+            <div class="stat-label">Sponsor Income</div>
+            <div class="stat-val">₹{{ number_format($member->sponsor_income, 2) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Team Income</div>
+            <div class="stat-val">₹{{ number_format($member->team_income, 2) }}</div>
+        </div>
+    </div>
+
+    {{-- Team Summary --}}
+    <div class="card card-pad">
+        <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #eee;">
+            Team Summary
+        </div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-label">Members Left</div>
+                <div class="stat-val">{{ count($member->leftMembers()) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Members Right</div>
+                <div class="stat-val">{{ count($member->rightMembers()) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Direct Sponsor Income</div>
+                <div class="stat-val">₹{{ number_format($member->direct_sponsor_income, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Team Income</div>
+                <div class="stat-val">₹{{ number_format($member->team_income, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pay Income</div>
+                <div class="stat-val">₹{{ number_format($member->pay_income, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Income</div>
+                <div class="stat-val">₹{{ number_format($member->total_income, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Balance</div>
+                <div class="stat-val">₹{{ number_format($member->balance, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Team BV</div>
+                <div class="stat-val">{{ number_format($member->team_bv, 2) }}</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@endsection
