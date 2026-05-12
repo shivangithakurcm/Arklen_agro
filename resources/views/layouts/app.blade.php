@@ -238,11 +238,9 @@
         <i class="fas fa-chart-pie"></i> Overview
     </a>
 
-    <div class="nav-section-label">Network</div>
-    <a href="{{ route('members.index') }}" 
-       class="nav-item {{ (request()->routeIs('members.index')) ? 'active' : '' }}">
-        <i class="fas fa-users"></i> Members
-    </a>
+    <span class="nav-item" style="opacity: 0.45; cursor: not-allowed; pointer-events: none;">
+    <i class="fas fa-users"></i> Members
+</span>
 
 </nav>
         <div class="sidebar-footer">

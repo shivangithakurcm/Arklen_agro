@@ -15,7 +15,7 @@ class MemberController extends Controller
         if ($request->filled('sponsor_id')) {
             $query->where('sponsor_id', $request->sponsor_id);
         }
-        $members = $query->latest()->paginate(15);
+        $members = $query->latest()->paginate(5);
         return view('members.index', compact('members'));
     }
 

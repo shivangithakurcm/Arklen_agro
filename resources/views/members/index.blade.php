@@ -103,7 +103,9 @@
         </table>
     </div>
 
-    <div style="margin-top:15px;">{{ $members->withQueryString()->links() }}</div>
+   <div style="margin-top:15px;">
+    {{ $members->withQueryString()->links('pagination::bootstrap-5') }}
+</div>
 
 </div>
 
