@@ -41,6 +41,7 @@
 
         .layout { display: flex; min-height: 100vh; }
 
+        /* ── Sidebar ── */
         .sidebar {
             width: var(--sidebar-w);
             background: var(--green-900);
@@ -93,6 +94,50 @@
         .nav-item.active { background: var(--green-700); color: #fff; }
         .nav-item.active i { color: var(--green-300); }
 
+        /* ── Master Dropdown ── */
+        .nav-dropdown-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+        .nav-dropdown-toggle .dropdown-arrow {
+            margin-left: auto;
+            font-size: 10px;
+            transition: transform .25s ease;
+            color: var(--green-500);
+        }
+        .nav-dropdown-toggle.open {
+            background: rgba(255,255,255,.07);
+            color: #fff;
+        }
+        .nav-dropdown-toggle.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .nav-dropdown {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height .3s ease;
+        }
+        .nav-dropdown.open {
+            max-height: 300px;
+        }
+
+        .nav-sub-item {
+            padding-left: 40px !important;
+            font-size: 12.5px !important;
+            color: #a8c98a !important;
+            margin-bottom: 1px;
+        }
+        .nav-sub-item:hover {
+            background: rgba(255,255,255,.06) !important;
+            color: #fff !important;
+        }
+        .nav-sub-item.active {
+            background: var(--green-700) !important;
+            color: #fff !important;
+        }
+
+        /* ── Sidebar Footer ── */
         .sidebar-footer { padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.08); }
         .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; }
         .sidebar-user-avatar {
@@ -103,6 +148,7 @@
         .sidebar-user-info strong { display: block; font-size: 12px; font-weight: 700; color: #fff; }
         .sidebar-user-info span { font-size: 11px; color: var(--green-500); }
 
+        /* ── Main ── */
         .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 
         .topbar {
@@ -133,8 +179,8 @@
 
         .page-content { flex: 1; padding: 28px; }
 
+        /* ── Flash Messages ── */
         .flash-wrap { margin-bottom: 20px; }
-
         .alert {
             display: flex; align-items: flex-start; gap: 10px;
             padding: 12px 16px; border-radius: var(--radius);
@@ -152,6 +198,7 @@
         .alert-close { margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; opacity: .6; font-size: 12px; padding: 0 2px; }
         .alert-close:hover { opacity: 1; }
 
+        /* ── Cards, Tables, Forms, Buttons ── */
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
         .card-pad { padding: 24px; }
 
@@ -220,29 +267,50 @@
 
     <aside class="sidebar" id="sidebar">
 
-       <div class="sidebar-logo">
-    <img src="{{ asset('images/arklen-logo.png') }}"
-        alt="Arklen Agro"
-        style="width:38px;height:38px;object-fit:contain;flex-shrink:0;">
-    <div class="sidebar-logo-text">
-        <strong>Arklen Agro</strong>
-        <span>Pvt. Ltd</span>
-    </div>
-</div>
+        <div class="sidebar-logo">
+            <img src="{{ asset('images/arklen-logo.png') }}"
+                 alt="Arklen Agro"
+                 style="width:38px;height:38px;object-fit:contain;flex-shrink:0;">
+            <div class="sidebar-logo-text">
+                <strong>Arklen Agro</strong>
+                <span>Pvt. Ltd</span>
+            </div>
+        </div>
 
-       <nav class="sidebar-nav">
+        <nav class="sidebar-nav">
 
-    <div class="nav-section-label">Dashboard</div>
-    <a href="{{ route('dashboard') }}" 
-       class="nav-item {{ (request()->routeIs('dashboard') || request()->routeIs('members.show') || request()->routeIs('members.edit')) ? 'active' : '' }}">
-        <i class="fas fa-chart-pie"></i> Overview
-    </a>
+            <div class="nav-section-label">Dashboard</div>
 
-    <span class="nav-item" style="opacity: 0.45; cursor: not-allowed; pointer-events: none;">
-    <i class="fas fa-users"></i> Members
-</span>
+            {{-- Members --}}
+            <a href="{{ route('members.index') }}"
+               class="nav-item {{ request()->routeIs('members.*') ? 'active' : '' }}">
+                <i class="fas fa-users"></i> Members
+            </a>
 
-</nav>
+            {{-- Orders --}}
+            <a href="{{ route('orders.index') }}"
+               class="nav-item {{ request()->routeIs('orders.*') ? 'active' : '' }}">
+                <i class="fas fa-box"></i> Orders
+            </a>
+
+            {{-- Master Dropdown --}}
+           
+            <div class="nav-item nav-dropdown-toggle {{ request()->routeIs('products.*') ? 'open' : '' }}"
+                 onclick="toggleDropdown(this)">
+                <i class="fas fa-layer-group"></i>
+                Master
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+            </div>
+
+            <div class="nav-dropdown {{ request()->routeIs('products.*') ? 'open' : '' }}">
+                <a href="{{ route('products.index') }}"
+                   class="nav-item nav-sub-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                    <i class="fas fa-seedling"></i> Product
+                </a>
+            </div>
+
+        </nav>
+
         <div class="sidebar-footer">
             <div class="sidebar-user">
                 <div class="sidebar-user-avatar">
@@ -288,14 +356,18 @@
                     <div class="alert alert-success">
                         <i class="fas fa-circle-check"></i>
                         {{ session('success') }}
-                        <button class="alert-close" onclick="this.parentElement.remove()"><i class="fas fa-xmark"></i></button>
+                        <button class="alert-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-xmark"></i>
+                        </button>
                     </div>
                 @endif
                 @if(session('error'))
                     <div class="alert alert-error">
                         <i class="fas fa-circle-exclamation"></i>
                         {{ session('error') }}
-                        <button class="alert-close" onclick="this.parentElement.remove()"><i class="fas fa-xmark"></i></button>
+                        <button class="alert-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-xmark"></i>
+                        </button>
                     </div>
                 @endif
                 @if($errors->any())
@@ -306,7 +378,9 @@
                                 <div>{{ $err }}</div>
                             @endforeach
                         </div>
-                        <button class="alert-close" onclick="this.parentElement.remove()"><i class="fas fa-xmark"></i></button>
+                        <button class="alert-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-xmark"></i>
+                        </button>
                     </div>
                 @endif
             </div>
@@ -319,6 +393,7 @@
 </div>
 
 <script>
+    // Sidebar toggle (mobile)
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');
         document.getElementById('sidebarOverlay').classList.toggle('open');
@@ -327,6 +402,14 @@
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarOverlay').classList.remove('open');
     }
+
+    // Master dropdown toggle
+    function toggleDropdown(el) {
+        el.classList.toggle('open');
+        el.nextElementSibling.classList.toggle('open');
+    }
+
+    // Auto-close flash messages after 5s
     setTimeout(() => {
         document.querySelectorAll('.alert').forEach(el => {
             el.style.transition = 'opacity .4s';

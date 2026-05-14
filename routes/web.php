@@ -1,8 +1,9 @@
 <?php
-
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProductController;
 
 // ── Auth ────────────────────────────────────────────────
 Route::get('/',       [AuthController::class, 'showLogin'])->name('login');
@@ -29,4 +30,22 @@ Route::middleware('auth')->group(function () {
     Route::put('/members/{member}',        [MemberController::class, 'update'])->name('members.update');
     Route::get('/members/{member}/action', [MemberController::class, 'action'])->name('members.action');
     Route::put('/members/{member}/action', [MemberController::class, 'actionUpdate'])->name('members.action.update');
+
+
+  
+
+Route::get('products', [ProductController::class, 'index'])->name('products.index');
+Route::post('products', [ProductController::class, 'store'])->name('products.store');
+Route::get('products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
+Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy'); 
+
+Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
+Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+Route::put('orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+Route::get('orders/{order}/action', [OrderController::class, 'action'])->name('orders.action');
+Route::put('orders/{order}/action', [OrderController::class, 'actionUpdate'])->name('orders.action.update');
 });
+
+
