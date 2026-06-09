@@ -9,20 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('members', function (Blueprint $table) {
-            //
-        });
-    }
+   public function up()
+{
+    Schema::table('members', function (Blueprint $table) {
+        $table->string('parent_id')->nullable()->after('sponsor_id');
+    });
+}
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('members', function (Blueprint $table) {
-            //
-        });
-    }
+public function down()
+{
+    Schema::table('members', function (Blueprint $table) {
+        $table->dropColumn('parent_id');
+    });
+}
 };
