@@ -224,7 +224,7 @@ $member->distributeCommission();
 
 public function tree()
 {
-    $members = Member::select('id','seller_id','sponsor_id','first_name','last_name','position','product_id')
+    $members = Member::select('id','seller_id','sponsor_id','parent_id','first_name','last_name','position','product_id')
                      ->get()
                      ->keyBy('seller_id');
     return view('tree', compact('members'));
