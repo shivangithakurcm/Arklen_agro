@@ -50,8 +50,8 @@ function buildTree(sellerId, depth) {
 
     const name = node.first_name + ' ' + node.last_name;
     const allMembers = Object.values(members);
-    const left  = allMembers.find(m => m.sponsor_id === sellerId && m.position === 'left');
-    const right = allMembers.find(m => m.sponsor_id === sellerId && m.position === 'right');
+   const left  = allMembers.find(m => m.parent_id === sellerId && m.position === 'left');
+const right = allMembers.find(m => m.parent_id === sellerId && m.position === 'right');
 
     const leftHtml  = left  ? buildTree(left.seller_id,  depth+1) : '<div class="tempty">Empty</div>';
     const rightHtml = right ? buildTree(right.seller_id, depth+1) : '<div class="tempty">Empty</div>';
@@ -69,9 +69,8 @@ function buildTree(sellerId, depth) {
 }
 
 function findRoots() {
-    const allIds = new Set(Object.keys(members));
     return Object.values(members).filter(function(m) {
-        return !m.sponsor_id || !allIds.has(m.sponsor_id);
+        return !m.parent_id;
     });
 }
 
