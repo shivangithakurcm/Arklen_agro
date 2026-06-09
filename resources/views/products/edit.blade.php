@@ -16,7 +16,6 @@
     <form method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data">
         @csrf @method('PUT')
 
-        {{-- Image --}}
         <div style="display:flex;justify-content:center;margin-bottom:25px;">
             <label for="edit_product_image" style="cursor:pointer;text-align:center;">
                 <div id="editProductPreview" style="width:100px;height:100px;border-radius:12px;border:2px dashed #9ac46b;background:#f4faee;display:flex;align-items:center;justify-content:center;overflow:hidden;">
@@ -39,6 +38,26 @@
             <div>
                 <label class="form-label">Product Price (₹) *</label>
                 <input type="number" name="product_price" value="{{ $product->product_price }}" required min="0" step="0.01" class="form-control">
+            </div>
+            <div>
+                <label class="form-label">Business Value *</label>
+                <input type="number" name="business_value" value="{{ $product->business_value }}" required min="0" step="0.01" class="form-control">
+            </div>
+            <div>
+                <label class="form-label">Direct Commission (%) *</label>
+                <input type="number" name="direct_commission" value="{{ $product->direct_commission }}" required min="0" max="100" step="0.01" class="form-control">
+            </div>
+            <div>
+                <label class="form-label">New Joinee (%) *</label>
+                <input type="number" name="new_joinee" value="{{ $product->new_joinee }}" required min="0" max="100" step="0.01" class="form-control">
+            </div>
+            <div>
+                <label class="form-label">Level 1 (%) *</label>
+                <input type="number" name="level_1" value="{{ $product->level_1 }}" required min="0" max="100" step="0.01" class="form-control">
+            </div>
+            <div>
+                <label class="form-label">Level 2 (%) *</label>
+                <input type="number" name="level_2" value="{{ $product->level_2 }}" required min="0" max="100" step="0.01" class="form-control">
             </div>
         </div>
 

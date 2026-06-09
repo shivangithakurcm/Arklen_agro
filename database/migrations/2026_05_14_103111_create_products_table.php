@@ -11,13 +11,18 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::create('products', function (Blueprint $table) {
-        $table->id();
-        $table->string('product_name');
-        $table->decimal('product_price', 10, 2);
-        $table->string('product_image')->nullable();
-        $table->timestamps();
-    });
+   // create_products_table
+Schema::create('products', function (Blueprint $table) {
+    $table->id();
+    $table->string('product_code')->unique();
+    $table->string('name');
+    $table->string('category')->nullable();
+    $table->decimal('price', 10, 2);
+    $table->decimal('bv', 10, 2)->default(0);   // Business Value
+    $table->integer('stock')->default(0);
+    $table->boolean('is_active')->default(true);
+    $table->timestamps();
+});
 }
 
     /**

@@ -66,6 +66,27 @@
         </div>
     </div>
 
+    {{-- Commission Section --}}
+    <div class="card card-pad" style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #eee;">
+            Commission Details
+        </div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-label">Direct Commission</div>
+                <div class="stat-val">₹{{ number_format($member->direct_commission ?? 0, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Level 1 Commission</div>
+                <div class="stat-val">₹{{ number_format($member->level1_commission ?? 0, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Level 2 Commission</div>
+                <div class="stat-val">₹{{ number_format($member->level2_commission ?? 0, 2) }}</div>
+            </div>
+        </div>
+    </div>
+
     {{-- Team Summary --}}
     <div class="card card-pad">
         <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #eee;">
@@ -101,9 +122,21 @@
                 <div class="stat-val">₹{{ number_format($member->balance, 2) }}</div>
             </div>
             <div class="stat-card">
+    <div class="stat-label">Left BV</div>
+    <div class="stat-val">{{ number_format($member->bv_left, 2) }}</div>
+</div>
+<div class="stat-card">
+    <div class="stat-label">Right BV</div>
+    <div class="stat-val">{{ number_format($member->bv_right, 2) }}</div>
+</div>
+            <div class="stat-card">
                 <div class="stat-label">Team BV</div>
                 <div class="stat-val">{{ number_format($member->team_bv, 2) }}</div>
             </div>
+            <div class="stat-card">
+    <div class="stat-label">New Joinee Commission</div>
+    <div class="stat-val">₹{{ number_format($member->new_joinee_income ?? 0, 2) }}</div>
+</div>
         </div>
     </div>
 

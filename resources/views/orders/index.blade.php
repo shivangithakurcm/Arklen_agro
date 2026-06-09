@@ -20,6 +20,7 @@
 </style>
 
 <div class="card card-pad">
+
     {{-- Header --}}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <h3 style="margin:0;color:var(--green-800);"><i class="fas fa-box"></i> Order List</h3>
@@ -31,15 +32,13 @@
     {{-- Filters --}}
     <form method="GET" action="{{ route('orders.index') }}" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name / order no" class="form-control" style="max-width:200px;">
-       <div style="display:flex;align-items:center;gap:6px;">
-    <input type="date" name="date_from" value="{{ request('date_from') }}" 
-        class="form-control" style="max-width:160px;" title="From Date"
-        placeholder="From Date">
-    <span style="color:#888;font-size:13px;white-space:nowrap;">to</span>
-    <input type="date" name="date_to" value="{{ request('date_to') }}" 
-        class="form-control" style="max-width:160px;" title="To Date"
-        placeholder="To Date">
-</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <input type="date" name="date_from" value="{{ request('date_from') }}"
+                class="form-control" style="max-width:160px;" title="From Date">
+            <span style="color:#888;font-size:13px;white-space:nowrap;">to</span>
+            <input type="date" name="date_to" value="{{ request('date_to') }}"
+                class="form-control" style="max-width:160px;" title="To Date">
+        </div>
         <input type="text" name="city" value="{{ request('city') }}" placeholder="City" class="form-control" style="max-width:140px;">
         <button type="submit" class="modal-btn add-btn">Search</button>
         @if(request()->anyFilled(['search','date_from','date_to','city']))
@@ -56,6 +55,7 @@
                     <th>Order No</th>
                     <th>Person Name</th>
                     <th>Contact</th>
+                    <th>Product</th>
                     <th>City</th>
                     <th>Order Date</th>
                     <th>Status</th>
@@ -69,6 +69,7 @@
                     <td><span class="badge badge-green">{{ $o->order_no }}</span></td>
                     <td>{{ $o->member->full_name }}</td>
                     <td>{{ $o->member->contact }}</td>
+                    <td>{{ $o->product->product_name ?? '-' }}</td>
                     <td>{{ $o->city }}</td>
                     <td>{{ $o->order_date->format('d M Y') }}</td>
                     <td><span class="badge badge-{{ $o->status }}">{{ ucfirst($o->status) }}</span></td>
@@ -80,7 +81,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" style="text-align:center;padding:30px;color:#888;">No orders found</td></tr>
+                <tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">No orders found</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -99,9 +100,12 @@
             </div>
             <button type="button" onclick="document.getElementById('addModal').style.display='none'" style="border:none;background:none;font-size:18px;cursor:pointer;">×</button>
         </div>
+
         <form method="POST" action="{{ route('orders.store') }}" style="padding:22px;">
             @csrf
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+
+                {{-- Member --}}
                 <div style="grid-column:span 2;">
                     <label class="form-label">Select Member *</label>
                     <select name="member_id" required class="form-control" style="height:38px;">
@@ -113,26 +117,46 @@
                         @endforeach
                     </select>
                 </div>
+
+                {{-- Product Dropdown --}}
                 <div style="grid-column:span 2;">
                     <label class="form-label">Order Product *</label>
-                    <input type="text" name="order_product" value="{{ old('order_product') }}" required class="form-control">
+                    <select name="product_id" required class="form-control" style="height:38px;" onchange="fillPrice(this)">
+                        <option value="">-- Select Product --</option>
+                        @foreach($products as $p)
+                        <option value="{{ $p->id }}"
+                            data-price="{{ $p->product_price }}"
+                            {{ old('product_id') == $p->id ? 'selected' : '' }}>
+                            {{ $p->product_name }} — ₹{{ number_format($p->product_price, 2) }}
+                        </option>
+                        @endforeach
+                    </select>
                 </div>
+
+                {{-- Quantity --}}
                 <div>
                     <label class="form-label">Order Quantity *</label>
                     <input type="number" name="order_quantity" value="{{ old('order_quantity') }}" required min="1" class="form-control">
                 </div>
+
+                {{-- Order Value --}}
                 <div>
                     <label class="form-label">Order Value (₹) *</label>
-                    <input type="number" name="order_value" value="{{ old('order_value') }}" required min="0" step="0.01" class="form-control">
+                    <input type="number" name="order_value" id="orderValue" value="{{ old('order_value') }}" required min="0" step="0.01" class="form-control">
                 </div>
+
+                {{-- Date --}}
                 <div>
                     <label class="form-label">Order Date *</label>
                     <input type="date" name="order_date" value="{{ old('order_date', date('Y-m-d')) }}" required class="form-control">
                 </div>
+
+                {{-- City --}}
                 <div>
                     <label class="form-label">City *</label>
                     <input type="text" name="city" value="{{ old('city') }}" required class="form-control">
                 </div>
+
             </div>
 
             @if($errors->any())
@@ -151,9 +175,17 @@
 
 @push('scripts')
 <script>
+function fillPrice(select) {
+    const price = select.options[select.selectedIndex].dataset.price;
+    if (price) {
+        document.getElementById('orderValue').value = price;
+    }
+}
+
 @if($errors->any())
 document.getElementById('addModal').style.display = 'flex';
 @endif
 </script>
 @endpush
+
 @endsection

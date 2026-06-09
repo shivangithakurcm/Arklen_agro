@@ -38,6 +38,11 @@
                     <th>Image</th>
                     <th>Product Name</th>
                     <th>Price</th>
+                    <th>Business Value</th>
+                    <th>Direct Commission</th>
+                    <th>New Joinee</th>
+                    <th>Level 1</th>
+                    <th>Level 2</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -56,6 +61,11 @@
                     </td>
                     <td>{{ $p->product_name }}</td>
                     <td>₹{{ number_format($p->product_price, 2) }}</td>
+                    <td>{{ $p->business_value }}</td>
+                    <td>{{ $p->direct_commission }}%</td>
+                    <td>{{ $p->new_joinee }}%</td>
+                    <td>{{ $p->level_1 }}%</td>
+                    <td>{{ $p->level_2 }}%</td>
                     <td>
                         <div class="action-btns">
                             <a href="{{ route('products.edit', $p) }}" class="action-btn action-btn-edit">
@@ -71,7 +81,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="5" style="text-align:center;padding:30px;color:#888;">No products found</td></tr>
+                <tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">No products found</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -112,6 +122,27 @@
                 <div>
                     <label class="form-label">Product Price (₹) *</label>
                     <input type="number" name="product_price" value="{{ old('product_price') }}" required min="0" step="0.01" class="form-control">
+                </div>
+                <div>
+    <label class="form-label">Business Value *</label>
+    <input type="number" name="business_value" value="{{ old('business_value') }}" 
+        required min="0" step="0.01" class="form-control">
+</div>
+                <div>
+                    <label class="form-label">Direct Commission (%) *</label>
+                    <input type="number" name="direct_commission" value="{{ old('direct_commission') }}" required min="0" max="100" step="0.01" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">New Joinee (%) *</label>
+                    <input type="number" name="new_joinee" value="{{ old('new_joinee') }}" required min="0" max="100" step="0.01" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">Level 1 (%) *</label>
+                    <input type="number" name="level_1" value="{{ old('level_1') }}" required min="0" max="100" step="0.01" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">Level 2 (%) *</label>
+                    <input type="number" name="level_2" value="{{ old('level_2') }}" required min="0" max="100" step="0.01" class="form-control">
                 </div>
             </div>
 

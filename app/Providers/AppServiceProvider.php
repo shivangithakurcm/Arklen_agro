@@ -7,13 +7,9 @@ use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        //
-    }
-
-    public function boot(): void
-    {
-        Paginator::useBootstrap();
-    }
+    public function register(): void {}
+public function boot(): void
+{
+    Paginator::defaultView('vendor.pagination.custom');
+}
 }

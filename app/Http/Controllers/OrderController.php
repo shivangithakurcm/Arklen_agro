@@ -3,13 +3,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Member;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with('member');
+        $query = Order::with(['member', 'product']);
 
         if ($request->search) {
             $query->whereHas('member', function($q) use ($request) {
@@ -29,27 +30,19 @@ class OrderController extends Controller
             $query->where('city', 'like', '%'.$request->city.'%');
         }
 
-        $orders = $query->latest()->paginate(15);
-        $members = Member::select('id','first_name','last_name','seller_id')->get();
+        $orders   = $query->latest()->paginate(15);
+        $members  = Member::select('id','first_name','last_name','seller_id')->get();
+        $products = Product::orderBy('product_name')->get();
 
-        return view('orders.index', compact('orders', 'members'));
+        return view('orders.index', compact('orders', 'members', 'products'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'member_id'      => 'required|exists:members,id',
-            'order_product'  => 'required|string|max:255',
-            'order_quantity' => 'required|integer|min:1',
-            'order_date'     => 'required|date',
-            'order_value'    => 'required|numeric|min:0',
-            'city'           => 'required|string|max:100',
-        ]);
-
         Order::create([
             'order_no'       => Order::generateOrderNo(),
             'member_id'      => $request->member_id,
-            'order_product'  => $request->order_product,
+            'product_id'     => $request->product_id,
             'order_quantity' => $request->order_quantity,
             'order_date'     => $request->order_date,
             'order_value'    => $request->order_value,
@@ -62,23 +55,22 @@ class OrderController extends Controller
 
     public function edit(Order $order)
     {
-        $members = Member::select('id','first_name','last_name','seller_id')->get();
-        return view('orders.edit', compact('order', 'members'));
+        $members  = Member::select('id','first_name','last_name','seller_id')->get();
+        $products = Product::orderBy('product_name')->get();
+        return view('orders.edit', compact('order', 'members', 'products'));
     }
 
     public function update(Request $request, Order $order)
     {
-        $request->validate([
-            'member_id'      => 'required|exists:members,id',
-            'order_product'  => 'required|string|max:255',
-            'order_quantity' => 'required|integer|min:1',
-            'order_date'     => 'required|date',
-            'order_value'    => 'required|numeric|min:0',
-            'city'           => 'required|string|max:100',
-            'status'         => 'required|in:pending,processing,delivered,cancelled',
+        $order->update([
+            'member_id'      => $request->member_id,
+            'product_id'     => $request->product_id,
+            'order_quantity' => $request->order_quantity,
+            'order_date'     => $request->order_date,
+            'order_value'    => $request->order_value,
+            'city'           => $request->city,
+            'status'         => $request->status,
         ]);
-
-        $order->update($request->all());
 
         return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
     }

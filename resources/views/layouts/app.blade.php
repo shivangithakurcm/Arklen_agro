@@ -308,7 +308,11 @@
                     <i class="fas fa-seedling"></i> Product
                 </a>
             </div>
-
+          
+            <a href="{{ route('tree') }}"
+               class="nav-item {{ request()->routeIs('tree') ? 'active' : '' }}">
+                <i class="fas fa-sitemap"></i> Binary Tree
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -370,19 +374,19 @@
                         </button>
                     </div>
                 @endif
-                @if($errors->any())
-                    <div class="alert alert-error">
-                        <i class="fas fa-circle-exclamation"></i>
-                        <div>
-                            @foreach($errors->all() as $err)
-                                <div>{{ $err }}</div>
-                            @endforeach
-                        </div>
-                        <button class="alert-close" onclick="this.parentElement.remove()">
-                            <i class="fas fa-xmark"></i>
-                        </button>
-                    </div>
-                @endif
+               @if($errors->any() && !request()->routeIs('members.*') && !request()->routeIs('orders.*'))
+    <div class="alert alert-error">
+        <i class="fas fa-circle-exclamation"></i>
+        <div>
+            @foreach($errors->all() as $err)
+                <div>{{ $err }}</div>
+            @endforeach
+        </div>
+        <button class="alert-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-xmark"></i>
+        </button>
+    </div>
+@endif
             </div>
 
             @yield('content')

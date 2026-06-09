@@ -97,8 +97,7 @@
         </table>
     </div>
 
-    <div style="margin-top:15px;">{{ $members->withQueryString()->links() }}</div>
-
+    <div style="margin-top:15px;">{{ $members->withQueryString()->links('vendor.pagination.custom') }}</div>
 </div>
 
 {{-- ADD MEMBER MODAL --}}
@@ -159,6 +158,17 @@
                     </select>
                 </div>
                 <div>
+    <label class="form-label">Product *</label>
+    <select name="product_id" required class="form-control" style="height:38px;">
+        <option value="">-- Select Product --</option>
+        @foreach($products as $p)
+        <option value="{{ $p->id }}" {{ old('product_id') == $p->id ? 'selected' : '' }}>
+            {{ $p->product_name }} — ₹{{ number_format($p->product_price, 2) }}
+        </option>
+        @endforeach
+    </select>
+</div>
+                <div>
                     <label class="form-label">Date of Joining *</label>
                     <input type="date" name="date_of_joining" value="{{ old('date_of_joining', date('Y-m-d')) }}" required class="form-control">
                 </div>
@@ -183,12 +193,14 @@
                 </div>
             </div>
 
-            @if($errors->any())
-            <div style="margin-top:15px;padding:10px;border-radius:8px;background:#ffe9e9;color:#d11;">
-                {{ $errors->first() }}
-            </div>
-            @endif
-
+           @if($errors->any())
+<div style="margin-top:15px;padding:12px 15px;border-radius:8px;background:#fff5f5;border:1px solid #fed7d7;color:#c53030;">
+    <div style="font-weight:600;margin-bottom:6px;font-size:13px;">⚠ Please fix the following:</div>
+    @foreach($errors->all() as $error)
+    <div style="font-size:12px;margin-top:3px;">• {{ $error }}</div>
+    @endforeach
+</div>
+@endif
             <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:25px;">
                 <button type="button" onclick="document.getElementById('addModal').style.display='none'" class="modal-btn close-btn">Close</button>
                 <button type="submit" class="modal-btn add-btn">Add Member</button>
@@ -209,7 +221,19 @@ function previewImage(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+@if($errors->any())
+document.getElementById('addModal').style.display = 'flex';
+@foreach($errors->keys() as $field)
+(function() {
+    var el = document.querySelector('[name="{{ $field }}"]');
+    if (el) {
+        el.style.borderColor = '#e53e3e';
+        el.style.background  = '#fff5f5';
+    }
+})();
+@endforeach
+@endif
 </script>
 @endpush
-
 @endsection

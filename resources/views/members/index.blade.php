@@ -1,10 +1,58 @@
 @extends('layouts.app')
-
 @section('title', 'Members — Arklen Agro')
 @section('page-title', 'Members')
 
-@section('content')
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+<style>
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border: 1px solid #dcdcdc !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+}
+.select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 38px !important;
+    padding-left: 12px !important;
+    color: #1e2a14 !important;
+}
+.select2-container .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+.select2-container--open .select2-selection--single {
+    border-color: #4b7c20 !important;
+    box-shadow: 0 0 0 3px rgba(109,184,42,.12) !important;
+}
+.select2-dropdown {
+    border: 1px solid #dcdcdc !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
+    z-index: 99999 !important;
+}
+.select2-search--dropdown .select2-search__field {
+    border: 1px solid #dcdcdc !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+    outline: none !important;
+}
+.select2-search--dropdown .select2-search__field:focus {
+    border-color: #4b7c20 !important;
+}
+.select2-results__option--highlighted {
+    background: var(--green-600, #569321) !important;
+}
+.select2-results__option {
+    padding: 8px 12px !important;
+}
+</style>
+@endpush
 
+@section('content')
 <style>
 .table-wrap{ overflow-x:auto; }
 .form-control{ width:100%; padding:10px 12px; border:1px solid #dcdcdc; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; }
@@ -61,6 +109,7 @@
                     <th>Right</th>
                     <th>Total Income</th>
                     <th>Joining Date</th>
+                    <th>Product</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -86,6 +135,7 @@
                     <td>{{ count($m->rightMembers()) }}</td>
                     <td>₹{{ number_format($m->total_income,2) }}</td>
                     <td>{{ $m->date_of_joining->format('d M Y') }}</td>
+                    <td>{{ $m->product->product_name ?? '-' }}</td>
                     <td>
                         <span class="badge {{ $m->is_active ? 'badge-active' : 'badge-inactive' }}">
                             {{ $m->is_active ? 'Active' : 'Inactive' }}
@@ -107,15 +157,16 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="13" style="text-align:center;padding:30px;color:#888;">No members found</td>
+                    <td colspan="14" style="text-align:center;padding:30px;color:#888;">No members found</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
+    {{-- Pagination --}}
     <div style="margin-top:15px;">
-        {{ $members->withQueryString()->links('pagination::bootstrap-5') }}
+       {{ $members->withQueryString()->links('vendor.pagination.custom') }}
     </div>
 
 </div>
@@ -166,14 +217,35 @@
                     <label class="form-label">Seller ID *</label>
                     <input type="text" name="seller_id" value="{{ old('seller_id') }}" required class="form-control" placeholder="e.g. SL0001">
                 </div>
+
+                {{-- Sponsor ID with Select2 search --}}
                 <div>
                     <label class="form-label">Sponsor ID</label>
-                    <input type="text" name="sponsor_id" value="{{ old('sponsor_id') }}" class="form-control">
+                    <select name="sponsor_id" id="sponsor_select" class="form-control" style="width:100%;">
+                        <option value="">---- Select Sponsor ----</option>
+                        @foreach($allMembers as $m)
+                        <option value="{{ $m->seller_id }}" {{ old('sponsor_id') == $m->seller_id ? 'selected' : '' }}>
+                            {{ $m->seller_id }} — {{ $m->full_name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Product *</label>
+                    <select name="product_id" required class="form-control" style="height:38px;">
+                        <option value="">-- Select Product --</option>
+                        @foreach($products as $p)
+                        <option value="{{ $p->id }}" {{ old('product_id') == $p->id ? 'selected' : '' }}>
+                            {{ $p->product_name }} — ₹{{ number_format($p->product_price, 2) }}
+                        </option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="form-label">Sponsor Leg</label>
                     <select name="sponsor_leg" class="form-control" style="height:38px;">
-                        <option value="left" {{ old('sponsor_leg') == 'left' ? 'selected' : '' }}>Left</option>
+                        <option value="left"  {{ old('sponsor_leg') == 'left'  ? 'selected' : '' }}>Left</option>
                         <option value="right" {{ old('sponsor_leg') == 'right' ? 'selected' : '' }}>Right</option>
                     </select>
                 </div>
@@ -203,8 +275,11 @@
             </div>
 
             @if($errors->any())
-            <div style="margin-top:15px;padding:10px;border-radius:8px;background:#ffe9e9;color:#d11;">
-                {{ $errors->first() }}
+            <div style="margin-top:15px;padding:12px 15px;border-radius:8px;background:#fff5f5;border:1px solid #fed7d7;color:#c53030;">
+                <div style="font-weight:600;margin-bottom:6px;font-size:13px;">⚠ Please fix the following:</div>
+                @foreach($errors->all() as $error)
+                <div style="font-size:12px;margin-top:3px;">• {{ $error }}</div>
+                @endforeach
             </div>
             @endif
 
@@ -217,7 +292,18 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+$(document).ready(function() {
+    $('#sponsor_select').select2({
+        placeholder: '---- Select Sponsor ----',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#addModal')
+    });
+});
+
 function previewImage(input) {
     if(input.files && input.files[0]) {
         const reader = new FileReader();
@@ -228,10 +314,19 @@ function previewImage(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
 @if($errors->any())
 document.getElementById('addModal').style.display = 'flex';
+@foreach($errors->keys() as $field)
+(function() {
+    var el = document.querySelector('[name="{{ $field }}"]');
+    if (el) {
+        el.style.borderColor = '#e53e3e';
+        el.style.background  = '#fff5f5';
+    }
+})();
+@endforeach
 @endif
 </script>
 @endpush
-
 @endsection

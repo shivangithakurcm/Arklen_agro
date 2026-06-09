@@ -21,40 +21,42 @@ class MemberApiController extends Controller
     }
 
     // Store member
-    public function store(Request $request)
-    {
-        $request->validate([
-            'first_name'      => 'required|string|max:100',
-            'last_name'       => 'required|string|max:100',
-            'contact'         => 'required|string|max:15',
-            'seller_id'       => 'required|string|unique:members,seller_id',
-            'sponsor_id'      => Member::exists() ? 'required|exists:members,seller_id' : 'nullable',
-            'position'        => 'nullable|in:left,right',
-            'address'         => 'required|string',
-            'aadhar_no'       => 'nullable|string|max:12',
-            'date_of_joining' => 'required|date',
-            'password'        => 'required|min:4|confirmed',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'first_name'      => 'required|string|max:100',
+        'last_name'       => 'required|string|max:100',
+        'contact'         => 'required|string|max:15',
+        'seller_id'       => 'required|string|unique:members,seller_id',
+        'sponsor_id'      => 'nullable|exists:members,seller_id',
+        'position'        => 'nullable|in:left,right',
+        'address'         => 'required|string',
+        'aadhar_no'       => 'nullable|string|max:12',
+        'date_of_joining' => 'required|date',
+        'password'        => 'required|min:4|confirmed',
+        'product_id'      => 'required|exists:products,id',
+    ]);
 
-        $member = Member::create([
-            'first_name'      => $request->first_name,
-            'last_name'       => $request->last_name,
-            'contact'         => $request->contact,
-            'seller_id'       => $request->seller_id,
-            'sponsor_id'      => $request->sponsor_id,
-            'position'        => $request->position ?? 'left',
-            'address'         => $request->address,
-            'aadhar_no'       => $request->aadhar_no,
-            'date_of_joining' => $request->date_of_joining,
-            'password'        => Hash::make($request->password),
-        ]);
+    $member = Member::create([
+        'first_name'      => $request->first_name,
+        'last_name'       => $request->last_name,
+        'contact'         => $request->contact,
+        'seller_id'       => $request->seller_id,
+        'sponsor_id'      => $request->sponsor_id,
+        'position'        => $request->position ?? 'left',
+        'address'         => $request->address,
+        'aadhar_no'       => $request->aadhar_no,
+        'date_of_joining' => $request->date_of_joining,
+        'password'        => Hash::make($request->password),
+        'product_id'      => $request->product_id,
+    ]);
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Member created successfully',
-            'data'    => $member,
-        ], 201);
-    }
+    return response()->json([
+        'status'  => true,
+        'message' => 'Member created successfully',
+        'data'    => $member,
+    ], 201);
+}
 
     // Show single member
     public function show($id)

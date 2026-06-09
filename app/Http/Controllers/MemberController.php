@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Member;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -10,50 +11,114 @@ use Illuminate\Support\Facades\Storage;
 class MemberController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = Member::query();
-        if ($request->filled('sponsor_id')) {
-            $query->where('sponsor_id', $request->sponsor_id);
-        }
-        $members = $query->latest()->paginate(5);
-        return view('members.index', compact('members'));
-    }
-
-    public function store(Request $request)
 {
-    $request->validate([
+    $query = Member::query();
+    if ($request->filled('sponsor_id')) {
+        $query->where('sponsor_id', $request->sponsor_id);
+    }
+    if ($request->filled('search')) {
+        $query->where(function($q) use ($request) {
+            $q->where('first_name', 'like', '%'.$request->search.'%')
+              ->orWhere('last_name',  'like', '%'.$request->search.'%')
+              ->orWhere('contact',    'like', '%'.$request->search.'%');
+        });
+    }
+    $members     = $query->latest()->paginate(5);
+    $allMembers  = Member::orderBy('first_name')->get(); // dropdown ke liye
+    $products    = Product::orderBy('product_name')->get();
+
+    return view('members.index', compact('members', 'allMembers', 'products'));
+}
+
+  public function store(Request $request)
+{
+    $validator = \Validator::make($request->all(), [
         'seller_id'       => 'required|string|unique:members,seller_id',
         'first_name'      => 'required|string|max:100',
         'last_name'       => 'required|string|max:100',
-       'contact'         => 'required|digits:10',        // exactly 10 digits
+        'contact'         => 'required|digits:10',
         'address'         => 'required|string',
-        'aadhar_no'       => 'nullable|digits:12',   
+        'aadhar_no'       => 'nullable|digits:12',
         'date_of_joining' => 'required|date',
         'sponsor_id'      => 'nullable|string',
         'sponsor_leg'     => 'nullable|in:left,right',
         'password'        => 'required|min:4|confirmed',
         'profile_image'   => 'nullable|image|max:2048',
+        'product_id'      => 'required|exists:products,id',
     ]);
 
-    $data             = $request->except(['password', 'password_confirmation', 'profile_image', 'sponsor_leg']);
+    if ($validator->fails()) {
+        return redirect()->route('members.index')
+            ->withErrors($validator)
+            ->withInput();
+    }
+
+    $leg  = $request->sponsor_leg ?? 'left';
+    $data = $request->except(['password', 'password_confirmation', 'profile_image', 'sponsor_leg']);
     $data['password'] = Hash::make($request->password);
-    $data['position'] = $request->sponsor_leg ?? 'left';
+    $data['position'] = $leg;
+
+    if ($request->filled('sponsor_id')) {
+        $data['parent_id'] = $this->findAvailableParent($request->sponsor_id, $leg);
+    }
 
     if ($request->hasFile('profile_image')) {
         $data['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
     }
 
-    Member::create($data);
+    $member = Member::create($data);
 
-    // Users table mein bhi add karo
     \App\Models\User::create([
         'name'      => $request->first_name . ' ' . $request->last_name,
         'seller_id' => $request->seller_id,
         'password'  => Hash::make($request->password),
     ]);
 
-    return redirect()->route('dashboard')->with('success', 'Member added successfully!');
+    $member->load('product');
+$member->distributeCommission();
+
+    return redirect()->route('members.index')->with('success', 'Member added successfully!');
 }
+    // ✅ Sponsor commission function
+    private function giveSponsorCommission(?string $sponsorId): void
+    {
+        if (!$sponsorId) return;
+
+        $sponsor = Member::where('seller_id', $sponsorId)->first();
+        if (!$sponsor) return;
+
+        $commissionAmount = 10; // ← yahan apni fixed amount rakho
+
+        $sponsor->increment('direct_sponsor_income', $commissionAmount);
+        $sponsor->increment('sponsor_income', $commissionAmount);
+        $sponsor->increment('total_income', $commissionAmount);
+        $sponsor->increment('balance', $commissionAmount);
+    }
+
+    private function findAvailableParent(string $sponsorId, string $leg): ?string
+    {
+        $queue = [$sponsorId];
+
+        while (!empty($queue)) {
+            $currentId = array_shift($queue);
+            $current   = Member::where('seller_id', $currentId)->first();
+
+            if (!$current) break;
+
+            $childInLeg = Member::where('parent_id', $currentId)
+                                ->where('position', $leg)
+                                ->first();
+
+            if (!$childInLeg) {
+                return $currentId;
+            }
+
+            $queue[] = $childInLeg->seller_id;
+        }
+
+        return null;
+    }
+
     public function show(Member $member)
     {
         return view('members.seller-profile', compact('member'));
@@ -69,9 +134,9 @@ class MemberController extends Controller
         $request->validate([
             'first_name'      => 'required|string|max:100',
             'last_name'       => 'required|string|max:100',
-            'contact'         => 'required|digits:10',        // exactly 10 digits
-        'address'         => 'required|string',
-        'aadhar_no'       => 'nullable|digits:12',   
+            'contact'         => 'required|digits:10',
+            'address'         => 'required|string',
+            'aadhar_no'       => 'nullable|digits:12',
             'date_of_joining' => 'required|date',
             'sponsor_id'      => 'nullable|string',
             'position'        => 'nullable|in:left,right',
@@ -112,9 +177,56 @@ class MemberController extends Controller
 
         $member->update($request->only([
             'bv_left', 'bv_right', 'sponsor_income', 'direct_sponsor_income',
-            'team_income', 'pay_income', 'total_income', 'team_bv'
+            'team_income', 'pay_income', 'total_income', 'team_bv',
         ]));
 
         return redirect()->route('dashboard')->with('success', 'Updated successfully!');
     }
+
+  private function generateCommission(?string $sponsorId, ?int $productId): void
+{
+    if (!$sponsorId) return;
+
+    $product = Product::find($productId);
+    if (!$product) return;
+
+    // Direct Sponsor
+    $direct = Member::where('seller_id', $sponsorId)->first();
+    if ($direct) {
+        $amount = $product->direct_commission ?? 0;
+        $direct->increment('direct_commission',     $amount); // ✅ naya field
+        $direct->increment('direct_sponsor_income', $amount);
+        $direct->increment('sponsor_income',        $amount);
+        $direct->increment('total_income',          $amount);
+        $direct->increment('balance',               $amount);
+    }
+
+    // Level 1
+    $level1 = $direct ? Member::where('seller_id', $direct->sponsor_id)->first() : null;
+    if ($level1) {
+        $amount = $product->level_1 ?? 0;
+        $level1->increment('level1_commission', $amount); // ✅ naya field
+        $level1->increment('team_income',       $amount);
+        $level1->increment('total_income',      $amount);
+        $level1->increment('balance',           $amount);
+    }
+
+    // Level 2
+    $level2 = $level1 ? Member::where('seller_id', $level1->sponsor_id)->first() : null;
+    if ($level2) {
+        $amount = $product->level_2 ?? 0;
+        $level2->increment('level2_commission', $amount); // ✅ naya field
+        $level2->increment('team_income',       $amount);
+        $level2->increment('total_income',      $amount);
+        $level2->increment('balance',           $amount);
+    }
+}
+
+public function tree()
+{
+    $members = Member::select('id','seller_id','sponsor_id','first_name','last_name','position','product_id')
+                     ->get()
+                     ->keyBy('seller_id');
+    return view('tree', compact('members'));
+}
 }

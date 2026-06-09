@@ -1,19 +1,30 @@
 @if ($paginator->hasPages())
-    <nav>
-        <ul class="pagination">
-            {{-- Previous Page Link --}}
-            @if ($paginator->onFirstPage())
-                <li class="disabled" aria-disabled="true"><span>@lang('pagination.previous')</span></li>
-            @else
-                <li><a href="{{ $paginator->previousPageUrl() }}" rel="prev">@lang('pagination.previous')</a></li>
-            @endif
+<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding-top:1rem; margin-top:1rem; border-top:1px solid #e5e7eb;">
 
-            {{-- Next Page Link --}}
-            @if ($paginator->hasMorePages())
-                <li><a href="{{ $paginator->nextPageUrl() }}" rel="next">@lang('pagination.next')</a></li>
-            @else
-                <li class="disabled" aria-disabled="true"><span>@lang('pagination.next')</span></li>
-            @endif
-        </ul>
-    </nav>
+    @foreach ($elements as $element)
+        @if (is_string($element))
+            <span style="padding:0 4px;color:#9ca3af;">{{ $element }}</span>
+        @endif
+
+        @if (is_array($element))
+            @foreach ($element as $page => $url)
+                @if ($page == $paginator->currentPage())
+                    <span style="display:inline-flex;align-items:center;justify-content:center;
+                        min-width:36px;height:36px;border-radius:6px;font-size:14px;
+                        background:#16a34a;color:#fff;font-weight:500;border:1px solid #16a34a;">
+                        {{ $page }}
+                    </span>
+                @else
+                    <a href="{{ $url }}"
+                       style="display:inline-flex;align-items:center;justify-content:center;
+                       min-width:36px;height:36px;border-radius:6px;font-size:14px;
+                       color:#374151;border:1px solid #d1d5db;background:#fff;text-decoration:none;">
+                        {{ $page }}
+                    </a>
+                @endif
+            @endforeach
+        @endif
+    @endforeach
+
+</div>
 @endif
