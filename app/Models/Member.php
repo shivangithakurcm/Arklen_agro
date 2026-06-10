@@ -17,8 +17,8 @@ class Member extends Authenticatable
         'aadhar_no', 'profile_image', 'date_of_joining', 'password',
         'bv_left', 'bv_right', 'sponsor_income', 'direct_sponsor_income',
         'team_income', 'pay_income', 'total_income', 'balance',
-        'team_bv', 'is_active','parent_id', 'product_id',// fillable mein add karo
-'direct_commission', 'level1_commission', 'level2_commission',
+        'team_bv', 'is_active', 'parent_id', 'product_id',
+        'direct_commission', 'level1_commission', 'level2_commission',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -28,6 +28,7 @@ class Member extends Authenticatable
         'is_active'       => 'boolean',
     ];
 
+    // ── Accessors ────────────────────────────────────────────
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
@@ -38,16 +39,24 @@ class Member extends Authenticatable
         return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
     }
 
+    // ── Relationships ─────────────────────────────────────────
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function leftMembers()
     {
         return self::where('sponsor_id', $this->seller_id)
-                   ->where('position', 'left')->get();
+                   ->where('position', 'left')
+                   ->get();
     }
 
     public function rightMembers()
     {
         return self::where('sponsor_id', $this->seller_id)
-                   ->where('position', 'right')->get();
+                   ->where('position', 'right')
+                   ->get();
     }
 
     public function sponsor()
@@ -56,96 +65,87 @@ class Member extends Authenticatable
             ? self::where('seller_id', $this->sponsor_id)->first()
             : null;
     }
-    public function product()
-{
-    return $this->belongsTo(Product::class);
-}
-// Sponsor ka Sponsor (Level 1 wala)
-public function level1Sponsor()
-{
-    return $this->sponsor()
-        ? $this->sponsor()->sponsor()
-        : null;
-}
 
-// Sponsor ka Sponsor ka Sponsor (Level 2 wala)
-public function level2Sponsor()
-{
-    return $this->level1Sponsor()
-        ? $this->level1Sponsor()->sponsor()
-        : null;
-}
+    // ── Sponsor Chain ─────────────────────────────────────────
+    public function level1Sponsor()
+    {
+        return $this->sponsor()
+            ? $this->sponsor()->sponsor()
+            : null;
+    }
 
-// Commission calculate karke save karo
-public function distributeCommission()
-{
-    $product = $this->product;
-    if (!$product) return;
+    public function level2Sponsor()
+    {
+        return $this->level1Sponsor()
+            ? $this->level1Sponsor()->sponsor()
+            : null;
+    }
 
-    $price = $product->product_price ?? 0;
-    $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
+    // ── Seller ID Generator ───────────────────────────────────
+    public static function generateSellerId(): string
+    {
+        $last       = self::orderBy('id', 'desc')->first();
+        $nextNumber = $last ? ($last->id + 1) : 1;
+        return 'SEL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        // Output: SEL-00001, SEL-00002, SEL-00003 ...
+    }
 
-    $directSponsor = $this->sponsor();
+    // ── Commission Distribution ───────────────────────────────
+    public function distributeCommission()
+    {
+        $product = $this->product;
+        if (!$product) return;
 
-    // ── 1. Direct Commission ──
-    if ($directSponsor) {
-        $amount = $pct('direct_commission');
-        if ($amount > 0) {
-            $directSponsor->increment('direct_commission', $amount);
-            $directSponsor->increment('total_income',      $amount);
-            $directSponsor->increment('balance',           $amount);
+        $price = $product->product_price ?? 0;
+        $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
+
+        // ── Parent Chain (tree ke upar) ──
+        $directParent = Member::where('seller_id', $this->parent_id)->first();
+        $level1Parent = $directParent
+                        ? Member::where('seller_id', $directParent->parent_id)->first()
+                        : null;
+        $level2Parent = $level1Parent
+                        ? Member::where('seller_id', $level1Parent->parent_id)->first()
+                        : null;
+
+        // ── 1. Direct Commission (immediate parent ko) ──
+        if ($directParent) {
+            $amount = $pct('direct_commission');
+            if ($amount > 0) {
+                $directParent->increment('direct_commission', $amount);
+                $directParent->increment('total_income',      $amount);
+                $directParent->increment('balance',           $amount);
+            }
+        }
+
+        // ── 2. New Joinee Commission (immediate parent ko) ──
+        if ($directParent) {
+            $amount = $pct('new_joinee');
+            if ($amount > 0) {
+                $directParent->increment('new_joinee_income', $amount);
+                $directParent->increment('total_income',      $amount);
+                $directParent->increment('balance',           $amount);
+            }
+        }
+
+        // ── 3. Level 1 Commission ──
+        if ($level1Parent) {
+            $amount = $pct('level_1');
+            if ($amount > 0) {
+                $level1Parent->increment('level1_commission', $amount);
+                $level1Parent->increment('total_income',      $amount);
+                $level1Parent->increment('balance',           $amount);
+            }
+        }
+
+        // ── 4. Level 2 Commission ──
+        if ($level2Parent) {
+            $amount = $pct('level_2');
+            if ($amount > 0) {
+                $level2Parent->increment('level2_commission', $amount);
+                $level2Parent->increment('total_income',      $amount);
+                $level2Parent->increment('balance',           $amount);
+            }
         }
     }
-
-    // ── 2. New Joinee Commission ──
-    if ($directSponsor) {
-        $amount = $pct('new_joinee');
-        if ($amount > 0) {
-            $directSponsor->increment('new_joinee_income', $amount);
-            $directSponsor->increment('total_income',      $amount);
-            $directSponsor->increment('balance',           $amount);
-        }
-    }
-
-    // ── 3. Level 1 Commission ──
-    $level1 = $this->level1Sponsor();
-    if ($level1) {
-        $amount = $pct('level_1');
-        if ($amount > 0) {
-            $level1->increment('level1_commission', $amount);
-            $level1->increment('total_income',      $amount);
-            $level1->increment('balance',           $amount);
-        }
-    }
-
-    // ── 4. Level 2 Commission ──
-    $level2 = $this->level2Sponsor();
-    if ($level2) {
-        $amount = $pct('level_2');
-        if ($amount > 0) {
-            $level2->increment('level2_commission', $amount);
-            $level2->increment('total_income',      $amount);
-            $level2->increment('balance',           $amount);
-        }
-    }
-}
-// Member.php
-
-public static function generateSellerId(): string
-{
-    // Sirf SL wale IDs lo, number extract karo, max nikalo
-    $max = self::where('seller_id', 'like', 'SL%')
-               ->get()
-               ->map(fn($m) => (int) substr($m->seller_id, 2))
-               ->max();
-
-    $num = ($max ?? 0) + 1;
-
-    // Duplicate check
-    while (self::where('seller_id', 'SL' . str_pad($num, 3, '0', STR_PAD_LEFT))->exists()) {
-        $num++;
-    }
-
-    return 'SL' . str_pad($num, 3, '0', STR_PAD_LEFT);
-}
 }

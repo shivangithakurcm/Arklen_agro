@@ -217,7 +217,7 @@
     <label class="form-label">Seller ID</label>
     <input type="text"
            id="sellerIdPreview"
-           value="{{ 'SL' . str_pad((\App\Models\Member::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT) }}"
+          value="{{ \App\Models\Member::generateSellerId() }}"
            disabled
            class="form-control"
            style="background:#f5f5f5;color:#666;font-weight:600;">
@@ -236,7 +236,7 @@
                     </select>
                 </div>
 
-                <div>
+                <!--<div>
                     <label class="form-label">Product *</label>
                     <select name="product_id" required class="form-control" style="height:38px;">
                         <option value="">-- Select Product --</option>
@@ -246,7 +246,7 @@
                         </option>
                         @endforeach
                     </select>
-                </div>
+                </div>-->
                 <div>
                     <label class="form-label">Sponsor Leg</label>
                     <select name="sponsor_leg" class="form-control" style="height:38px;">
@@ -259,15 +259,18 @@
                     <input type="date" name="date_of_joining" value="{{ old('date_of_joining', date('Y-m-d')) }}" required class="form-control">
                 </div>
                 <div>
-                    <label class="form-label">Aadhar No</label>
-                    <input type="text" name="aadhar_no" value="{{ old('aadhar_no') }}"
-                        class="form-control"
-                        maxlength="12"
-                        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)">
+                    <!-- ✅ Fix — readonly trick use karo -->
+<input type="text" name="aadhar_no" 
+       autocomplete="new-password"
+       value="{{ old('aadhar_no') }}"
+       class="form-control"
+       maxlength="12"
+       oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)">
                 </div>
                 <div>
                     <label class="form-label">Password *</label>
-                    <input type="password" name="password" required class="form-control">
+                    <input type="password" name="password" required class="form-control" 
+       autocomplete="new-password">
                 </div>
                 <div>
                     <label class="form-label">Confirm Password *</label>

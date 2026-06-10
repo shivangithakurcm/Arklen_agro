@@ -6,25 +6,24 @@ use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
-
 // ── Auth ────────────────────────────────────────────────
-Route::get('/',       [AuthController::class, 'showLogin'])->name('login');
+Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
-// ── Protected ────────────────────────────────────────────
+// ── Protected ───────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
-Route::get('/dashboard', function () {
-    $allMembers = \App\Models\Member::orderBy('first_name')->get();
-    $members    = \App\Models\Member::latest()->paginate(5);
-    $products   = \App\Models\Product::orderBy('product_name')->get();
+    Route::get('/dashboard', function () {
+        $allMembers = \App\Models\Member::orderBy('first_name')->get();
+        $members    = \App\Models\Member::latest()->paginate(5);
+        $products   = \App\Models\Product::orderBy('product_name')->get();
 
-    return view('dashboard', compact('allMembers', 'members', 'products'));
-})->name('dashboard');
+        return view('dashboard', compact('allMembers', 'members', 'products'));
+    })->name('dashboard');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Members
+    // ── Members ─────────────────────────────────────────
     Route::get('/members',                      [MemberController::class, 'index'])->name('members.index');
     Route::post('/members',                     [MemberController::class, 'store'])->name('members.store');
     Route::get('/members/{member}',             [MemberController::class, 'show'])->name('members.show');
@@ -35,20 +34,22 @@ Route::get('/dashboard', function () {
     Route::put('/members/{member}/override',    [MemberController::class, 'adminOverride'])->name('members.admin-override');
     Route::get('/members/{member}/recalculate', [MemberController::class, 'recalculate'])->name('members.recalculate');
 
-    // Products
-    Route::get('/products',               [ProductController::class, 'index'])->name('products.index');
-    Route::post('/products',              [ProductController::class, 'store'])->name('products.store');
-    Route::get('/products/{product}/edit',[ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}',     [ProductController::class, 'update'])->name('products.update');
-    Route::delete('/products/{product}',  [ProductController::class, 'destroy'])->name('products.destroy');
-    // Tree
-Route::get('/tree', [MemberController::class, 'tree'])->name('tree');
-    // Orders
-    Route::get('/orders',                  [OrderController::class, 'index'])->name('orders.index');
-    Route::post('/orders',                 [OrderController::class, 'store'])->name('orders.store');
-    Route::get('/orders/{order}/edit',     [OrderController::class, 'edit'])->name('orders.edit');
-    Route::put('/orders/{order}',          [OrderController::class, 'update'])->name('orders.update');
-    Route::get('/orders/{order}/action',   [OrderController::class, 'action'])->name('orders.action');
-    Route::put('/orders/{order}/action',   [OrderController::class, 'actionUpdate'])->name('orders.action.update');
+    // ── Products ─────────────────────────────────────────
+    Route::get('/products',                [ProductController::class, 'index'])->name('products.index');
+    Route::post('/products',               [ProductController::class, 'store'])->name('products.store');
+    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::put('/products/{product}',      [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{product}',   [ProductController::class, 'destroy'])->name('products.destroy');
+
+    // ── Tree ─────────────────────────────────────────────
+    Route::get('/tree', [MemberController::class, 'tree'])->name('tree');
+
+    // ── Orders ───────────────────────────────────────────
+    Route::get('/orders',                [OrderController::class, 'index'])->name('orders.index');
+    Route::post('/orders',               [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/{order}/edit',   [OrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/orders/{order}',        [OrderController::class, 'update'])->name('orders.update');
+    Route::get('/orders/{order}/action', [OrderController::class, 'action'])->name('orders.action');
+    Route::put('/orders/{order}/action', [OrderController::class, 'actionUpdate'])->name('orders.action.update');
 
 });

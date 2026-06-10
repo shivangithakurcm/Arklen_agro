@@ -14,6 +14,7 @@ class MemberController extends Controller
     public function index(Request $request)
 {
     $query = Member::query();
+
     if ($request->filled('sponsor_id')) {
         $query->where('sponsor_id', $request->sponsor_id);
     }
@@ -24,11 +25,15 @@ class MemberController extends Controller
               ->orWhere('contact',    'like', '%'.$request->search.'%');
         });
     }
-    $members     = $query->latest()->paginate(5);
-    $allMembers  = Member::orderBy('first_name')->get(); // dropdown ke liye
-    $products    = Product::orderBy('product_name')->get();
 
-    return view('members.index', compact('members', 'allMembers', 'products'));
+    $members      = $query->latest()->paginate(5);
+    $allMembers   = Member::where('is_active', 1)        // ← sirf active
+                          ->orderBy('first_name')
+                          ->get(['id', 'seller_id', 'first_name', 'last_name']); // ← sirf zaroori columns
+    $products     = Product::orderBy('product_name')->get();
+    $nextSellerId = Member::generateSellerId();           // ← add kiya
+
+    return view('members.index', compact('members', 'allMembers', 'products', 'nextSellerId'));
 }
 
  public function store(Request $request)
@@ -79,7 +84,7 @@ class MemberController extends Controller
     $product = Product::find($member->product_id);
     if ($product) {
         \App\Models\Order::create([
-            'order_no'       => 'ORD-' . str_pad($member->id, 5, '0', STR_PAD_LEFT),
+            'order_no' => 'ORD-' . strtoupper(uniqid()),
             'member_id'      => $member->id,
             'product_id'     => $member->product_id,
             'order_date'     => $member->date_of_joining,
@@ -138,33 +143,39 @@ class MemberController extends Controller
     return view('members.edit', compact('member', 'sponsors'));
 }
 
-    public function update(Request $request, Member $member)
-    {
-        $request->validate([
-            'first_name'      => 'required|string|max:100',
-            'last_name'       => 'required|string|max:100',
-            'contact'         => 'required|digits:10',
-            'address'         => 'required|string',
-            'aadhar_no'       => 'nullable|digits:12',
-            'date_of_joining' => 'required|date',
-            'sponsor_id'      => 'nullable|string',
-            'position'        => 'nullable|in:left,right',
-            'is_active'       => 'nullable|boolean',
-            'profile_image'   => 'nullable|image|max:2048',
-        ]);
+   public function update(Request $request, Member $member)
+{
+    $request->validate([
+        'first_name'      => 'required|string|max:100',
+        'last_name'       => 'required|string|max:100',
+        'contact'         => 'required|digits:10',
+        'address'         => 'required|string',
+        'aadhar_no'       => 'nullable|digits:12',
+        'date_of_joining' => 'required|date',
+        'sponsor_id'      => 'nullable|string',
+        'position'        => 'nullable|in:left,right',
+        'is_active'       => 'nullable|boolean',
+        'profile_image'   => 'nullable|image|max:2048',
+        'password'        => 'nullable|min:4|confirmed', // ← ADD
+    ]);
 
-        $data = $request->except(['profile_image', '_method', '_token']);
+    $data = $request->except(['profile_image', '_method', '_token', 'password', 'password_confirmation']);
 
-        if ($request->hasFile('profile_image')) {
-            if ($member->profile_image) {
-                Storage::disk('public')->delete($member->profile_image);
-            }
-            $data['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
-        }
-
-        $member->update($data);
-        return redirect()->route('dashboard')->with('success', 'Member updated successfully!');
+    // Password sirf tab update karo jab filled ho
+    if ($request->filled('password')) {
+        $data['password'] = Hash::make($request->password);
     }
+
+    if ($request->hasFile('profile_image')) {
+        if ($member->profile_image) {
+            Storage::disk('public')->delete($member->profile_image);
+        }
+        $data['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
+    }
+
+    $member->update($data);
+    return redirect()->route('dashboard')->with('success', 'Member updated successfully!');
+}
 
     public function action(Member $member)
     {
