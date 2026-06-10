@@ -170,17 +170,7 @@
                         <option value="right" {{ old('sponsor_leg') == 'right' ? 'selected' : '' }}>Right</option>
                     </select>
                 </div>
-                <div>
-    <label class="form-label">Product *</label>
-    <select name="product_id" required class="form-control" style="height:38px;">
-        <option value="">-- Select Product --</option>
-        @foreach($products as $p)
-        <option value="{{ $p->id }}" {{ old('product_id') == $p->id ? 'selected' : '' }}>
-            {{ $p->product_name }} — ₹{{ number_format($p->product_price, 2) }}
-        </option>
-        @endforeach
-    </select>
-</div>
+              
                 <div>
                     <label class="form-label">Date of Joining *</label>
                     <input type="date" name="date_of_joining" value="{{ old('date_of_joining', date('Y-m-d')) }}" required class="form-control">

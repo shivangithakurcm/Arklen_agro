@@ -49,7 +49,7 @@ class MemberController extends Controller
         'sponsor_leg'     => 'nullable|in:left,right',
         'password'        => 'required|min:4|confirmed',
         'profile_image'   => 'nullable|image|max:2048',
-        'product_id'      => 'required|exists:products,id',
+        
     ]);
 
     if ($validator->fails()) {
@@ -63,6 +63,8 @@ class MemberController extends Controller
     $data['password'] = Hash::make($request->password);
     $data['position'] = $leg;
     $data['seller_id'] = Member::generateSellerId();
+    dd($data['seller_id']); // yahan lagana hai
+
 
     if ($request->filled('sponsor_id')) {
         $data['parent_id'] = $this->findAvailableParent($request->sponsor_id, $leg);
@@ -98,9 +100,7 @@ class MemberController extends Controller
         ]);
     }
 
-    $member->load('product');
-    $member->distributeCommission();
-
+   
     return redirect()->route('members.index')->with('success', 'Member added successfully!');
 }
 

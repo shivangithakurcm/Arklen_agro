@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Product;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -19,6 +20,7 @@ class Member extends Authenticatable
         'team_income', 'pay_income', 'total_income', 'balance',
         'team_bv', 'is_active', 'parent_id', 'product_id',
         'direct_commission', 'level1_commission', 'level2_commission',
+        'new_joinee_income',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -28,7 +30,6 @@ class Member extends Authenticatable
         'is_active'       => 'boolean',
     ];
 
-    // ── Accessors ────────────────────────────────────────────
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
@@ -39,22 +40,78 @@ class Member extends Authenticatable
         return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
     }
 
-    // ── Relationships ─────────────────────────────────────────
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
+    public function reverseCommission(Product $product = null, int $qty = 1)
+{
+    $product = $product ?? $this->product;
+    if (!$product) return;
+
+    $price = ($product->product_price ?? 0) * $qty;
+    $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
+
+    $directParent = Member::where('seller_id', $this->parent_id)->first();
+    $level1Parent = $directParent
+                    ? Member::where('seller_id', $directParent->parent_id)->first()
+                    : null;
+    $level2Parent = $level1Parent
+                    ? Member::where('seller_id', $level1Parent->parent_id)->first()
+                    : null;
+
+    // ← Pehla order check (reverse mein bhi same check)
+    $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() === 1;
+
+    if ($directParent) {
+        $amount = $pct('direct_commission');
+        if ($amount > 0) {
+            $directParent->decrement('direct_commission', $amount);
+            $directParent->decrement('total_income',      $amount);
+            $directParent->decrement('balance',           $amount);
+        }
+
+        // ← Sirf pehle order ka reverse
+        if ($isFirstOrder) {
+            $amount = $pct('new_joinee');
+            if ($amount > 0) {
+                $directParent->decrement('new_joinee_income', $amount);
+                $directParent->decrement('total_income',      $amount);
+                $directParent->decrement('balance',           $amount);
+            }
+        }
+    }
+
+    if ($level1Parent) {
+        $amount = $pct('level_1');
+        if ($amount > 0) {
+            $level1Parent->decrement('level1_commission', $amount);
+            $level1Parent->decrement('total_income',      $amount);
+            $level1Parent->decrement('balance',           $amount);
+        }
+    }
+
+    if ($level2Parent) {
+        $amount = $pct('level_2');
+        if ($amount > 0) {
+            $level2Parent->decrement('level2_commission', $amount);
+            $level2Parent->decrement('total_income',      $amount);
+            $level2Parent->decrement('balance',           $amount);
+        }
+    }
+}
+
     public function leftMembers()
     {
-        return self::where('sponsor_id', $this->seller_id)
+        return self::where('parent_id', $this->seller_id)
                    ->where('position', 'left')
                    ->get();
     }
 
     public function rightMembers()
     {
-        return self::where('sponsor_id', $this->seller_id)
+        return self::where('parent_id', $this->seller_id)
                    ->where('position', 'right')
                    ->get();
     }
@@ -66,60 +123,38 @@ class Member extends Authenticatable
             : null;
     }
 
-    // ── Sponsor Chain ─────────────────────────────────────────
-    public function level1Sponsor()
-    {
-        return $this->sponsor()
-            ? $this->sponsor()->sponsor()
-            : null;
-    }
+   
 
-    public function level2Sponsor()
-    {
-        return $this->level1Sponsor()
-            ? $this->level1Sponsor()->sponsor()
-            : null;
-    }
+    // ← Product parameter add kiya
+   public function distributeCommission(Product $product = null, int $qty = 1)
+{
+    $product = $product ?? $this->product;
+    if (!$product) return;
 
-    // ── Seller ID Generator ───────────────────────────────────
-    public static function generateSellerId(): string
-    {
-        $last       = self::orderBy('id', 'desc')->first();
-        $nextNumber = $last ? ($last->id + 1) : 1;
-        return 'SEL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-        // Output: SEL-00001, SEL-00002, SEL-00003 ...
-    }
+    $price = ($product->product_price ?? 0) * $qty;
+    $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
 
-    // ── Commission Distribution ───────────────────────────────
-    public function distributeCommission()
-    {
-        $product = $this->product;
-        if (!$product) return;
+    $directParent = Member::where('seller_id', $this->parent_id)->first();
+    $level1Parent = $directParent
+                    ? Member::where('seller_id', $directParent->parent_id)->first()
+                    : null;
+    $level2Parent = $level1Parent
+                    ? Member::where('seller_id', $level1Parent->parent_id)->first()
+                    : null;
 
-        $price = $product->product_price ?? 0;
-        $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
+    // ← Pehla order check
+    $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() === 1;
 
-        // ── Parent Chain (tree ke upar) ──
-        $directParent = Member::where('seller_id', $this->parent_id)->first();
-        $level1Parent = $directParent
-                        ? Member::where('seller_id', $directParent->parent_id)->first()
-                        : null;
-        $level2Parent = $level1Parent
-                        ? Member::where('seller_id', $level1Parent->parent_id)->first()
-                        : null;
-
-        // ── 1. Direct Commission (immediate parent ko) ──
-        if ($directParent) {
-            $amount = $pct('direct_commission');
-            if ($amount > 0) {
-                $directParent->increment('direct_commission', $amount);
-                $directParent->increment('total_income',      $amount);
-                $directParent->increment('balance',           $amount);
-            }
+    if ($directParent) {
+        $amount = $pct('direct_commission');
+        if ($amount > 0) {
+            $directParent->increment('direct_commission', $amount);
+            $directParent->increment('total_income',      $amount);
+            $directParent->increment('balance',           $amount);
         }
 
-        // ── 2. New Joinee Commission (immediate parent ko) ──
-        if ($directParent) {
+        // ← Sirf pehle order pe
+        if ($isFirstOrder) {
             $amount = $pct('new_joinee');
             if ($amount > 0) {
                 $directParent->increment('new_joinee_income', $amount);
@@ -127,25 +162,24 @@ class Member extends Authenticatable
                 $directParent->increment('balance',           $amount);
             }
         }
+    }
 
-        // ── 3. Level 1 Commission ──
-        if ($level1Parent) {
-            $amount = $pct('level_1');
-            if ($amount > 0) {
-                $level1Parent->increment('level1_commission', $amount);
-                $level1Parent->increment('total_income',      $amount);
-                $level1Parent->increment('balance',           $amount);
-            }
-        }
-
-        // ── 4. Level 2 Commission ──
-        if ($level2Parent) {
-            $amount = $pct('level_2');
-            if ($amount > 0) {
-                $level2Parent->increment('level2_commission', $amount);
-                $level2Parent->increment('total_income',      $amount);
-                $level2Parent->increment('balance',           $amount);
-            }
+    if ($level1Parent) {
+        $amount = $pct('level_1');
+        if ($amount > 0) {
+            $level1Parent->increment('level1_commission', $amount);
+            $level1Parent->increment('total_income',      $amount);
+            $level1Parent->increment('balance',           $amount);
         }
     }
+
+    if ($level2Parent) {
+        $amount = $pct('level_2');
+        if ($amount > 0) {
+            $level2Parent->increment('level2_commission', $amount);
+            $level2Parent->increment('total_income',      $amount);
+            $level2Parent->increment('balance',           $amount);
+        }
+    }
+}
 }

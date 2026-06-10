@@ -37,13 +37,13 @@ class OrderController extends Controller
         return view('orders.index', compact('orders', 'members', 'products'));
     }
 
-   public function store(Request $request)
+  public function store(Request $request)
 {
     $product = Product::find($request->product_id);
     $qty     = $request->order_quantity ?? 1;
 
-    Order::create([
-        'order_no'       => Order::generateOrderNo(),
+    $order = Order::create([
+        'order_no'       => 'ORD-' . strtoupper(uniqid()),
         'member_id'      => $request->member_id,
         'product_id'     => $request->product_id,
         'order_quantity' => $qty,
@@ -56,6 +56,11 @@ class OrderController extends Controller
         'status'         => 'pending',
     ]);
 
+    $member = Member::find($order->member_id);
+    if ($member) {
+        $member->distributeCommission($product, $qty); // ← qty pass
+    }
+
     return redirect()->route('orders.index')->with('success', 'Order created successfully!');
 }
     public function edit(Order $order)
@@ -67,6 +72,17 @@ class OrderController extends Controller
 
    public function update(Request $request, Order $order)
 {
+    // 1. Pehle purana product aur qty lo
+    $oldProduct = Product::find($order->product_id);
+    $oldQty     = $order->order_quantity;
+    $oldMember  = Member::find($order->member_id);
+
+    // 2. Purana commission reverse karo
+    if ($oldMember && $oldProduct) {
+        $oldMember->reverseCommission($oldProduct, $oldQty);
+    }
+
+    // 3. Order update karo
     $product = Product::find($request->product_id);
     $qty     = $request->order_quantity ?? 1;
 
@@ -82,6 +98,12 @@ class OrderController extends Controller
         'city'           => $request->city,
         'status'         => $request->status,
     ]);
+
+    // 4. Naya commission distribute karo
+    $newMember = Member::find($request->member_id);
+    if ($newMember) {
+        $newMember->distributeCommission($product, $qty);
+    }
 
     return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
 }
