@@ -68,14 +68,23 @@
                     maxlength="10"
                     oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
             </div>
-            <div>
-                <label class="form-label">Seller ID</label>
-                <input type="text" value="{{ $member->seller_id }}" disabled class="form-control" style="background:#f5f5f5;">
-            </div>
-            <div>
-                <label class="form-label">Sponsor ID</label>
-                <input type="text" name="sponsor_id" value="{{ old('sponsor_id', $member->sponsor_id) }}" class="form-control">
-            </div>
+           <div>
+    <label class="form-label">Seller ID</label>
+    <input type="text" value="{{ $member->seller_id }}" disabled class="form-control" style="background:#f5f5f5;color:#666;font-weight:600;">
+    <small style="color:#999;">cannot be changed</small>
+</div>
+           <div>
+    <label class="form-label">Sponsor</label>
+    <select name="sponsor_id" class="form-control" id="sponsorSelect">
+        <option value="">-- Select Sponsor --</option>
+        @foreach($sponsors as $sponsor)
+            <option value="{{ $sponsor->seller_id }}"
+                {{ old('sponsor_id', $member->sponsor_id) == $sponsor->seller_id ? 'selected' : '' }}>
+                {{ $sponsor->seller_id }} — {{ $sponsor->first_name }} {{ $sponsor->last_name }}
+            </option>
+        @endforeach
+    </select>
+</div>
             <div>
                 <label class="form-label">Position</label>
                 <select name="position" class="form-control">
@@ -124,7 +133,17 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script>
+$(document).ready(function() {
+    $('#sponsorSelect').select2({
+        placeholder: 'Search by ID or Name...',
+        allowClear: true,
+        width: '100%'
+    });
+});
+
 function previewImage(input) {
     if(input.files && input.files[0]) {
         const reader = new FileReader();

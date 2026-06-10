@@ -68,12 +68,14 @@ const right = allMembers.find(m => m.parent_id === sellerId && m.position === 'r
     '</div>';
 }
 
+
 function findRoots() {
+    const allSellerIds = Object.values(members).map(m => m.seller_id);
     return Object.values(members).filter(function(m) {
-        return !m.parent_id;
+        // Woh member root hai jiska parent_id members mein exist nahi karta
+        return !allSellerIds.includes(m.parent_id);
     });
 }
-
 window.addEventListener('DOMContentLoaded', function() {
     const roots = findRoots();
     let html = '';

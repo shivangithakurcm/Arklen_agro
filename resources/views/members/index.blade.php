@@ -213,11 +213,16 @@
                         maxlength="10"
                         oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
-                <div>
-                    <label class="form-label">Seller ID *</label>
-                    <input type="text" name="seller_id" value="{{ old('seller_id') }}" required class="form-control" placeholder="e.g. SL0001">
-                </div>
-
+              <div>
+    <label class="form-label">Seller ID</label>
+    <input type="text"
+           id="sellerIdPreview"
+           value="{{ 'SL' . str_pad((\App\Models\Member::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT) }}"
+           disabled
+           class="form-control"
+           style="background:#f5f5f5;color:#666;font-weight:600;">
+    
+</div>
                 {{-- Sponsor ID with Select2 search --}}
                 <div>
                     <label class="form-label">Sponsor ID</label>

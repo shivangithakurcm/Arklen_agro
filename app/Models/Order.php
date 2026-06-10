@@ -46,4 +46,5 @@ class Order extends Model
 
     return $orderNo;
 }
+
 }

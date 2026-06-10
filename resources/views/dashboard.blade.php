@@ -143,12 +143,25 @@
         oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
 </div>
                 <div>
-                    <label class="form-label">Seller ID *</label>
-                    <input type="text" name="seller_id" value="{{ old('seller_id') }}" required class="form-control" placeholder="e.g. SL0001">
-                </div>
+    <label class="form-label">Seller ID *</label>
+    <input type="text" 
+           name="seller_id" 
+           value="{{ \App\Models\Member::generateSellerId() }}"
+           readonly
+           class="form-control" 
+           style="background:#f5f5f5;color:#666;font-weight:600;cursor:not-allowed;">
+    <small style="color:#999;">Auto generated</small>
+</div>
                 <div>
                     <label class="form-label">Sponsor ID</label>
-                    <input type="text" name="sponsor_id" value="{{ old('sponsor_id') }}" class="form-control">
+                    <select name="sponsor_id" id="sponsor_select" class="form-control" style="width:100%;">
+                        <option value="">---- Select Sponsor ----</option>
+                        @foreach($allMembers as $m)
+                        <option value="{{ $m->seller_id }}" {{ old('sponsor_id') == $m->seller_id ? 'selected' : '' }}>
+                            {{ $m->seller_id }} — {{ $m->full_name }}
+                        </option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="form-label">Sponsor Leg</label>
@@ -211,6 +224,13 @@
 
 @push('scripts')
 <script>
+
+$('#sponsor_select').select2({
+    placeholder: '---- Select Sponsor ----',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('#addModal')
+});   
 function previewImage(input) {
     if(input.files && input.files[0]) {
         const reader = new FileReader();

@@ -37,22 +37,27 @@ class OrderController extends Controller
         return view('orders.index', compact('orders', 'members', 'products'));
     }
 
-    public function store(Request $request)
-    {
-        Order::create([
-            'order_no'       => Order::generateOrderNo(),
-            'member_id'      => $request->member_id,
-            'product_id'     => $request->product_id,
-            'order_quantity' => $request->order_quantity,
-            'order_date'     => $request->order_date,
-            'order_value'    => $request->order_value,
-            'city'           => $request->city,
-            'status'         => 'pending',
-        ]);
+   public function store(Request $request)
+{
+    $product = Product::find($request->product_id);
+    $qty     = $request->order_quantity ?? 1;
 
-        return redirect()->route('orders.index')->with('success', 'Order created successfully!');
-    }
+    Order::create([
+        'order_no'       => Order::generateOrderNo(),
+        'member_id'      => $request->member_id,
+        'product_id'     => $request->product_id,
+        'order_quantity' => $qty,
+        'order_date'     => $request->order_date,
+        'order_value'    => $product->product_price,
+        'order_product'  => $product->product_name,
+        'total_value'    => $product->product_price * $qty,
+        'total_bv'       => round(($product->business_value / 100) * $product->product_price * $qty, 2),
+        'city'           => $request->city,
+        'status'         => 'pending',
+    ]);
 
+    return redirect()->route('orders.index')->with('success', 'Order created successfully!');
+}
     public function edit(Order $order)
     {
         $members  = Member::select('id','first_name','last_name','seller_id')->get();
@@ -60,21 +65,26 @@ class OrderController extends Controller
         return view('orders.edit', compact('order', 'members', 'products'));
     }
 
-    public function update(Request $request, Order $order)
-    {
-        $order->update([
-            'member_id'      => $request->member_id,
-            'product_id'     => $request->product_id,
-            'order_quantity' => $request->order_quantity,
-            'order_date'     => $request->order_date,
-            'order_value'    => $request->order_value,
-            'city'           => $request->city,
-            'status'         => $request->status,
-        ]);
+   public function update(Request $request, Order $order)
+{
+    $product = Product::find($request->product_id);
+    $qty     = $request->order_quantity ?? 1;
 
-        return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
-    }
+    $order->update([
+        'member_id'      => $request->member_id,
+        'product_id'     => $request->product_id,
+        'order_quantity' => $qty,
+        'order_date'     => $request->order_date,
+        'order_value'    => $product->product_price,
+        'order_product'  => $product->product_name,
+        'total_value'    => $product->product_price * $qty,
+        'total_bv'       => round(($product->business_value / 100) * $product->product_price * $qty, 2),
+        'city'           => $request->city,
+        'status'         => $request->status,
+    ]);
 
+    return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
+}
     public function action(Order $order)
     {
         return view('orders.action', compact('order'));

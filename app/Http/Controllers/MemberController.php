@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Order;
 
 class MemberController extends Controller
 {
@@ -30,10 +31,9 @@ class MemberController extends Controller
     return view('members.index', compact('members', 'allMembers', 'products'));
 }
 
-  public function store(Request $request)
+ public function store(Request $request)
 {
     $validator = \Validator::make($request->all(), [
-        'seller_id'       => 'required|string|unique:members,seller_id',
         'first_name'      => 'required|string|max:100',
         'last_name'       => 'required|string|max:100',
         'contact'         => 'required|digits:10',
@@ -57,6 +57,7 @@ class MemberController extends Controller
     $data = $request->except(['password', 'password_confirmation', 'profile_image', 'sponsor_leg']);
     $data['password'] = Hash::make($request->password);
     $data['position'] = $leg;
+    $data['seller_id'] = Member::generateSellerId();
 
     if ($request->filled('sponsor_id')) {
         $data['parent_id'] = $this->findAvailableParent($request->sponsor_id, $leg);
@@ -70,30 +71,33 @@ class MemberController extends Controller
 
     \App\Models\User::create([
         'name'      => $request->first_name . ' ' . $request->last_name,
-        'seller_id' => $request->seller_id,
+        'seller_id' => $data['seller_id'],
         'password'  => Hash::make($request->password),
     ]);
 
+    // ✅ Order automatically create karo
+    $product = Product::find($member->product_id);
+    if ($product) {
+        \App\Models\Order::create([
+            'order_no'       => 'ORD-' . str_pad($member->id, 5, '0', STR_PAD_LEFT),
+            'member_id'      => $member->id,
+            'product_id'     => $member->product_id,
+            'order_date'     => $member->date_of_joining,
+            'city'           => $member->address,
+            'order_product'  => $product->product_name,
+            'order_quantity' => 1,
+            'order_value'    => $product->product_price,
+            'total_value'    => $product->product_price,
+            'total_bv'       => round(($product->business_value / 100) * $product->product_price, 2),
+            'status'         => 'delivered',
+        ]);
+    }
+
     $member->load('product');
-$member->distributeCommission();
+    $member->distributeCommission();
 
     return redirect()->route('members.index')->with('success', 'Member added successfully!');
 }
-    // ✅ Sponsor commission function
-    private function giveSponsorCommission(?string $sponsorId): void
-    {
-        if (!$sponsorId) return;
-
-        $sponsor = Member::where('seller_id', $sponsorId)->first();
-        if (!$sponsor) return;
-
-        $commissionAmount = 10; // ← yahan apni fixed amount rakho
-
-        $sponsor->increment('direct_sponsor_income', $commissionAmount);
-        $sponsor->increment('sponsor_income', $commissionAmount);
-        $sponsor->increment('total_income', $commissionAmount);
-        $sponsor->increment('balance', $commissionAmount);
-    }
 
     private function findAvailableParent(string $sponsorId, string $leg): ?string
     {
@@ -124,10 +128,15 @@ $member->distributeCommission();
         return view('members.seller-profile', compact('member'));
     }
 
-    public function edit(Member $member)
-    {
-        return view('members.edit', compact('member'));
-    }
+   public function edit(Member $member)
+{
+    $sponsors = Member::where('id', '!=', $member->id)
+                      ->where('is_active', 1)
+                      ->orderBy('first_name')
+                      ->get(['id', 'seller_id', 'first_name', 'last_name']);
+
+    return view('members.edit', compact('member', 'sponsors'));
+}
 
     public function update(Request $request, Member $member)
     {
@@ -183,45 +192,7 @@ $member->distributeCommission();
         return redirect()->route('dashboard')->with('success', 'Updated successfully!');
     }
 
-  private function generateCommission(?string $sponsorId, ?int $productId): void
-{
-    if (!$sponsorId) return;
-
-    $product = Product::find($productId);
-    if (!$product) return;
-
-    // Direct Sponsor
-    $direct = Member::where('seller_id', $sponsorId)->first();
-    if ($direct) {
-        $amount = $product->direct_commission ?? 0;
-        $direct->increment('direct_commission',     $amount); // ✅ naya field
-        $direct->increment('direct_sponsor_income', $amount);
-        $direct->increment('sponsor_income',        $amount);
-        $direct->increment('total_income',          $amount);
-        $direct->increment('balance',               $amount);
-    }
-
-    // Level 1
-    $level1 = $direct ? Member::where('seller_id', $direct->sponsor_id)->first() : null;
-    if ($level1) {
-        $amount = $product->level_1 ?? 0;
-        $level1->increment('level1_commission', $amount); // ✅ naya field
-        $level1->increment('team_income',       $amount);
-        $level1->increment('total_income',      $amount);
-        $level1->increment('balance',           $amount);
-    }
-
-    // Level 2
-    $level2 = $level1 ? Member::where('seller_id', $level1->sponsor_id)->first() : null;
-    if ($level2) {
-        $amount = $product->level_2 ?? 0;
-        $level2->increment('level2_commission', $amount); // ✅ naya field
-        $level2->increment('team_income',       $amount);
-        $level2->increment('total_income',      $amount);
-        $level2->increment('balance',           $amount);
-    }
-}
-
+  
 public function tree()
 {
     $members = Member::select('id','seller_id','sponsor_id','parent_id','first_name','last_name','position','product_id')

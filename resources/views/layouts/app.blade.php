@@ -8,6 +8,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
         :root {
@@ -41,7 +42,6 @@
 
         .layout { display: flex; min-height: 100vh; }
 
-        /* ── Sidebar ── */
         .sidebar {
             width: var(--sidebar-w);
             background: var(--green-900);
@@ -94,83 +94,30 @@
         .nav-item.active { background: var(--green-700); color: #fff; }
         .nav-item.active i { color: var(--green-300); }
 
-        /* ── Master Dropdown ── */
-        .nav-dropdown-toggle {
-            cursor: pointer;
-            user-select: none;
-        }
-        .nav-dropdown-toggle .dropdown-arrow {
-            margin-left: auto;
-            font-size: 10px;
-            transition: transform .25s ease;
-            color: var(--green-500);
-        }
-        .nav-dropdown-toggle.open {
-            background: rgba(255,255,255,.07);
-            color: #fff;
-        }
-        .nav-dropdown-toggle.open .dropdown-arrow {
-            transform: rotate(180deg);
-        }
+        .nav-dropdown-toggle { cursor: pointer; user-select: none; }
+        .nav-dropdown-toggle .dropdown-arrow { margin-left: auto; font-size: 10px; transition: transform .25s ease; color: var(--green-500); }
+        .nav-dropdown-toggle.open { background: rgba(255,255,255,.07); color: #fff; }
+        .nav-dropdown-toggle.open .dropdown-arrow { transform: rotate(180deg); }
+        .nav-dropdown { overflow: hidden; max-height: 0; transition: max-height .3s ease; }
+        .nav-dropdown.open { max-height: 300px; }
+        .nav-sub-item { padding-left: 40px !important; font-size: 12.5px !important; color: #a8c98a !important; margin-bottom: 1px; }
+        .nav-sub-item:hover { background: rgba(255,255,255,.06) !important; color: #fff !important; }
+        .nav-sub-item.active { background: var(--green-700) !important; color: #fff !important; }
 
-        .nav-dropdown {
-            overflow: hidden;
-            max-height: 0;
-            transition: max-height .3s ease;
-        }
-        .nav-dropdown.open {
-            max-height: 300px;
-        }
-
-        .nav-sub-item {
-            padding-left: 40px !important;
-            font-size: 12.5px !important;
-            color: #a8c98a !important;
-            margin-bottom: 1px;
-        }
-        .nav-sub-item:hover {
-            background: rgba(255,255,255,.06) !important;
-            color: #fff !important;
-        }
-        .nav-sub-item.active {
-            background: var(--green-700) !important;
-            color: #fff !important;
-        }
-
-        /* ── Sidebar Footer ── */
         .sidebar-footer { padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.08); }
         .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; }
-        .sidebar-user-avatar {
-            width: 32px; height: 32px; background: var(--green-600);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
-        }
+        .sidebar-user-avatar { width: 32px; height: 32px; background: var(--green-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
         .sidebar-user-info strong { display: block; font-size: 12px; font-weight: 700; color: #fff; }
         .sidebar-user-info span { font-size: 11px; color: var(--green-500); }
 
-        /* ── Main ── */
         .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 
-        .topbar {
-            height: var(--topbar-h);
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 28px;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 1px 0 var(--border);
-        }
+        .topbar { height: var(--topbar-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 0 var(--border); }
         .topbar-left { display: flex; align-items: center; gap: 14px; }
         .topbar-menu-btn { display: none; background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; padding: 4px; }
         .topbar-title { font-size: 18px; font-weight: 800; color: var(--green-800); letter-spacing: -.4px; }
         .topbar-right { display: flex; align-items: center; gap: 10px; }
-        .topbar-btn {
-            width: 36px; height: 36px; background: var(--bg);
-            border: 1px solid var(--border); border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--text-muted); font-size: 14px;
-            position: relative; transition: all .15s;
-        }
+        .topbar-btn { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); font-size: 14px; position: relative; transition: all .15s; }
         .topbar-btn:hover { background: var(--green-50); color: var(--green-700); border-color: var(--green-300); }
         .topbar-user { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: background .15s; }
         .topbar-user:hover { background: var(--bg); }
@@ -179,18 +126,9 @@
 
         .page-content { flex: 1; padding: 28px; }
 
-        /* ── Flash Messages ── */
         .flash-wrap { margin-bottom: 20px; }
-        .alert {
-            display: flex; align-items: flex-start; gap: 10px;
-            padding: 12px 16px; border-radius: var(--radius);
-            font-size: 13.5px; font-weight: 500; margin-bottom: 10px;
-            animation: slideDown .2s ease;
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+        .alert { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; margin-bottom: 10px; animation: slideDown .2s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         .alert-success { background: var(--green-50); border: 1px solid var(--green-200); color: var(--green-800); }
         .alert-error   { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; }
         .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
@@ -198,7 +136,6 @@
         .alert-close { margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; opacity: .6; font-size: 12px; padding: 0 2px; }
         .alert-close:hover { opacity: 1; }
 
-        /* ── Cards, Tables, Forms, Buttons ── */
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
         .card-pad { padding: 24px; }
 
@@ -246,6 +183,16 @@
 
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 190; }
 
+        /* ── Select2 Custom Style ── */
+        .select2-container .select2-selection--single { height: 38px !important; border: 1px solid var(--border) !important; border-radius: 8px !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 38px !important; font-size: 13px !important; color: var(--text) !important; padding-left: 12px !important; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px !important; }
+        .select2-container--default.select2-container--focus .select2-selection--single { border-color: var(--green-500) !important; box-shadow: 0 0 0 3px rgba(109,184,42,.12) !important; }
+        .select2-dropdown { border: 1px solid var(--green-300) !important; border-radius: 8px !important; font-size: 13px !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .select2-container--default .select2-results__option--highlighted { background-color: var(--green-600) !important; }
+        .select2-search--dropdown .select2-search__field { border: 1px solid var(--border) !important; border-radius: 6px !important; padding: 6px 10px !important; font-size: 13px !important; }
+        .select2-container { width: 100% !important; }
+
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
@@ -278,23 +225,18 @@
         </div>
 
         <nav class="sidebar-nav">
-
             <div class="nav-section-label">Dashboard</div>
 
-            {{-- Members --}}
             <a href="{{ route('members.index') }}"
                class="nav-item {{ request()->routeIs('members.*') ? 'active' : '' }}">
                 <i class="fas fa-users"></i> Members
             </a>
 
-            {{-- Orders --}}
             <a href="{{ route('orders.index') }}"
                class="nav-item {{ request()->routeIs('orders.*') ? 'active' : '' }}">
                 <i class="fas fa-box"></i> Orders
             </a>
 
-            {{-- Master Dropdown --}}
-           
             <div class="nav-item nav-dropdown-toggle {{ request()->routeIs('products.*') ? 'open' : '' }}"
                  onclick="toggleDropdown(this)">
                 <i class="fas fa-layer-group"></i>
@@ -308,7 +250,7 @@
                     <i class="fas fa-seedling"></i> Product
                 </a>
             </div>
-          
+
             <a href="{{ route('tree') }}"
                class="nav-item {{ request()->routeIs('tree') ? 'active' : '' }}">
                 <i class="fas fa-sitemap"></i> Binary Tree
@@ -374,19 +316,19 @@
                         </button>
                     </div>
                 @endif
-               @if($errors->any() && !request()->routeIs('members.*') && !request()->routeIs('orders.*'))
-    <div class="alert alert-error">
-        <i class="fas fa-circle-exclamation"></i>
-        <div>
-            @foreach($errors->all() as $err)
-                <div>{{ $err }}</div>
-            @endforeach
-        </div>
-        <button class="alert-close" onclick="this.parentElement.remove()">
-            <i class="fas fa-xmark"></i>
-        </button>
-    </div>
-@endif
+                @if($errors->any() && !request()->routeIs('members.*') && !request()->routeIs('orders.*'))
+                    <div class="alert alert-error">
+                        <i class="fas fa-circle-exclamation"></i>
+                        <div>
+                            @foreach($errors->all() as $err)
+                                <div>{{ $err }}</div>
+                            @endforeach
+                        </div>
+                        <button class="alert-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+                @endif
             </div>
 
             @yield('content')
@@ -396,8 +338,10 @@
 
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-    // Sidebar toggle (mobile)
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');
         document.getElementById('sidebarOverlay').classList.toggle('open');
@@ -406,14 +350,10 @@
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarOverlay').classList.remove('open');
     }
-
-    // Master dropdown toggle
     function toggleDropdown(el) {
         el.classList.toggle('open');
         el.nextElementSibling.classList.toggle('open');
     }
-
-    // Auto-close flash messages after 5s
     setTimeout(() => {
         document.querySelectorAll('.alert').forEach(el => {
             el.style.transition = 'opacity .4s';

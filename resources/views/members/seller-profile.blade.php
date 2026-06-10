@@ -54,19 +54,7 @@
         </div>
     </div>
 
-    {{-- Sponsor Income + Team Income --}}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
-        <div class="stat-card">
-            <div class="stat-label">Sponsor Income</div>
-            <div class="stat-val">₹{{ number_format($member->sponsor_income, 2) }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Team Income</div>
-            <div class="stat-val">₹{{ number_format($member->team_income, 2) }}</div>
-        </div>
-    </div>
-
-    {{-- Commission Section --}}
+    {{-- Commission Details --}}
     <div class="card card-pad" style="margin-bottom:20px;">
         <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #eee;">
             Commission Details
@@ -83,6 +71,10 @@
             <div class="stat-card">
                 <div class="stat-label">Level 2 Commission</div>
                 <div class="stat-val">₹{{ number_format($member->level2_commission ?? 0, 2) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">New Joinee Commission</div>
+                <div class="stat-val">₹{{ number_format($member->new_joinee_income ?? 0, 2) }}</div>
             </div>
         </div>
     </div>
@@ -101,42 +93,23 @@
                 <div class="stat-label">Members Right</div>
                 <div class="stat-val">{{ count($member->rightMembers()) }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Direct Sponsor Income</div>
-                <div class="stat-val">₹{{ number_format($member->direct_sponsor_income, 2) }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Team Income</div>
-                <div class="stat-val">₹{{ number_format($member->team_income, 2) }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Pay Income</div>
-                <div class="stat-val">₹{{ number_format($member->pay_income, 2) }}</div>
-            </div>
-            <div class="stat-card">
+           <!--<div class="stat-card">
                 <div class="stat-label">Total Income</div>
                 <div class="stat-val">₹{{ number_format($member->total_income, 2) }}</div>
+            </div> -->
+          
+            <div class="stat-card">
+                <div class="stat-label">Left BV</div>
+                <div class="stat-val">{{ number_format($member->bv_left, 2) }}</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Balance</div>
-                <div class="stat-val">₹{{ number_format($member->balance, 2) }}</div>
+                <div class="stat-label">Right BV</div>
+                <div class="stat-val">{{ number_format($member->bv_right, 2) }}</div>
             </div>
-            <div class="stat-card">
-    <div class="stat-label">Left BV</div>
-    <div class="stat-val">{{ number_format($member->bv_left, 2) }}</div>
-</div>
-<div class="stat-card">
-    <div class="stat-label">Right BV</div>
-    <div class="stat-val">{{ number_format($member->bv_right, 2) }}</div>
-</div>
             <div class="stat-card">
                 <div class="stat-label">Team BV</div>
                 <div class="stat-val">{{ number_format($member->team_bv, 2) }}</div>
             </div>
-            <div class="stat-card">
-    <div class="stat-label">New Joinee Commission</div>
-    <div class="stat-val">₹{{ number_format($member->new_joinee_income ?? 0, 2) }}</div>
-</div>
         </div>
     </div>
 

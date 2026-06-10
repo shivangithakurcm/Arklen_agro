@@ -16,20 +16,20 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_name'      => 'required|string|max:255',
-            'product_price'     => 'required|numeric|min:0',
-            'direct_commission' => 'required|numeric|min:0|max:100',
-            'new_joinee'        => 'required|numeric|min:0|max:100',
-            'level_1'           => 'required|numeric|min:0|max:100',
-            'level_2'           => 'required|numeric|min:0|max:100',
-            'product_image'     => 'nullable|image|max:2048',
-        ]);
+    'product_name'      => 'required|string|max:255',
+    'product_price'     => 'required|numeric|min:0',
+    'business_value'    => 'required|numeric|min:0', // ✅
+    'direct_commission' => 'required|numeric|min:0|max:100',
+    'new_joinee'        => 'required|numeric|min:0|max:100',
+    'level_1'           => 'required|numeric|min:0|max:100',
+    'level_2'           => 'required|numeric|min:0|max:100',
+    'product_image'     => 'nullable|image|max:2048',
+]);
 
-        $data = $request->only([
-            'product_name', 'product_price',
-            'direct_commission', 'new_joinee', 'level_1', 'level_2'
-        ]);
-
+$data = $request->only([
+    'product_name', 'product_price', 'business_value', // ✅
+    'direct_commission', 'new_joinee', 'level_1', 'level_2'
+]);
         if ($request->hasFile('product_image')) {
             $data['product_image'] = $request->file('product_image')->store('products', 'public');
         }
@@ -46,20 +46,21 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $request->validate([
-            'product_name'      => 'required|string|max:255',
-            'product_price'     => 'required|numeric|min:0',
-            'direct_commission' => 'required|numeric|min:0|max:100',
-            'new_joinee'        => 'required|numeric|min:0|max:100',
-            'level_1'           => 'required|numeric|min:0|max:100',
-            'level_2'           => 'required|numeric|min:0|max:100',
-            'product_image'     => 'nullable|image|max:2048',
-        ]);
+       $request->validate([
+    'product_name'      => 'required|string|max:255',
+    'product_price'     => 'required|numeric|min:0',
+    'business_value'    => 'required|numeric|min:0', // ✅
+    'direct_commission' => 'required|numeric|min:0|max:100',
+    'new_joinee'        => 'required|numeric|min:0|max:100',
+    'level_1'           => 'required|numeric|min:0|max:100',
+    'level_2'           => 'required|numeric|min:0|max:100',
+    'product_image'     => 'nullable|image|max:2048',
+]);
 
-        $data = $request->only([
-            'product_name', 'product_price',
-            'direct_commission', 'new_joinee', 'level_1', 'level_2'
-        ]);
+$data = $request->only([
+    'product_name', 'product_price', 'business_value', // ✅
+    'direct_commission', 'new_joinee', 'level_1', 'level_2'
+]);
 
         if ($request->hasFile('product_image')) {
             if ($product->product_image) {

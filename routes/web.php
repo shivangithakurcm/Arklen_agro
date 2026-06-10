@@ -6,6 +6,7 @@ use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
+
 // ── Auth ────────────────────────────────────────────────
 Route::get('/',       [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
@@ -13,14 +14,12 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 // ── Protected ────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
-  Route::get('/dashboard', function () {
-    $query = \App\Models\Member::query();
-    if (request('sponsor_id')) {
-        $query->where('sponsor_id', request('sponsor_id'));
-    }
-    $members  = $query->latest()->paginate(5);
-    $products = \App\Models\Product::orderBy('product_name')->get();
-    return view('dashboard', compact('members', 'products'));
+Route::get('/dashboard', function () {
+    $allMembers = \App\Models\Member::orderBy('first_name')->get();
+    $members    = \App\Models\Member::latest()->paginate(5);
+    $products   = \App\Models\Product::orderBy('product_name')->get();
+
+    return view('dashboard', compact('allMembers', 'members', 'products'));
 })->name('dashboard');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
