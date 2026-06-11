@@ -47,4 +47,8 @@ class Order extends Model
     return $orderNo;
 }
 
+public function subOrders()
+{
+    return $this->hasMany(\App\Models\SubOrder::class, 'order_id');
+}
 }

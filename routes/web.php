@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\DashboardController;
 
 // ── Auth ────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -13,13 +14,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 // ── Protected ───────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', function () {
-        $allMembers = \App\Models\Member::orderBy('first_name')->get();
-        $members    = \App\Models\Member::latest()->paginate(5);
-        $products   = \App\Models\Product::orderBy('product_name')->get();
-
-        return view('dashboard', compact('allMembers', 'members', 'products'));
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -43,6 +38,10 @@ Route::middleware('auth')->group(function () {
 
     // ── Tree ─────────────────────────────────────────────
     Route::get('/tree', [MemberController::class, 'tree'])->name('tree');
+    Route::patch('orders/{order}/toggle', [OrderController::class, 'toggle'])->name('orders.toggle');
+
+    Route::get('orders/create',        [OrderController::class, 'create'])->name('orders.create');
+
 
     // ── Orders ───────────────────────────────────────────
     Route::get('/orders',                [OrderController::class, 'index'])->name('orders.index');
@@ -51,5 +50,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/orders/{order}',        [OrderController::class, 'update'])->name('orders.update');
     Route::get('/orders/{order}/action', [OrderController::class, 'action'])->name('orders.action');
     Route::put('/orders/{order}/action', [OrderController::class, 'actionUpdate'])->name('orders.action.update');
+    Route::resource('orders', OrderController::class)->except(['create']);
+    Route::get('/orders/{order}', [OrderController::class, 'show'])
+    ->name('orders.show');
+
+    Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])
+    ->name('orders.invoice');
 
 });

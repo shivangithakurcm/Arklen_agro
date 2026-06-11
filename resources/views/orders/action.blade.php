@@ -1,32 +1,187 @@
 @extends('layouts.app')
-@section('title', 'Order Action — Arklen Agro')
+
+@section('title', 'Order Action')
 @section('page-title', 'Order Action')
 
 @section('content')
-<div style="margin-bottom:16px;">
-    <a href="{{ route('orders.index') }}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid #ddd;border-radius:8px;text-decoration:none;color:#555;font-size:13px;">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
+
+<style>
+.form-card{
+    background:#fff;
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.form-control{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    font-size:14px;
+}
+
+.form-label{
+    display:block;
+    margin-bottom:6px;
+    font-weight:600;
+    color:#555;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.btn-save{
+    background:#4b7c20;
+    color:#fff;
+    border:none;
+    padding:10px 25px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.btn-back{
+    background:#eee;
+    color:#333;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+}
+
+.order-info{
+    background:#f8faf5;
+    border:1px solid #dce9c9;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+@media(max-width:768px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
+<div class="card card-pad">
+
+    {{-- Order Info --}}
+    <div class="order-info">
+        <h4 style="margin-bottom:10px;">
+            Order #{{ $order->order_no }}
+        </h4>
+
+        <p><strong>Product:</strong> {{ $order->order_product }}</p>
+        <p><strong>Quantity:</strong> {{ $order->order_quantity }}</p>
+        <p><strong>Total Amount:</strong> ₹{{ number_format($order->total_value,2) }}</p>
+        <p><strong>Date:</strong> {{ $order->order_date->format('d M Y') }}</p>
+    </div>
+
+    <div class="form-card">
+
+        <h3 style="margin-top:0;color:#3a6110;">
+            Member Details
+        </h3>
+
+        <form method="POST" action="{{ route('members.update',$member->id) }}">
+            @csrf
+            @method('PUT')
+
+            <div class="grid">
+
+                <div>
+                    <label class="form-label">First Name</label>
+                    <input type="text"
+                           name="first_name"
+                           class="form-control"
+                           value="{{ $member->first_name }}">
+                </div>
+
+                <div>
+                    <label class="form-label">Last Name</label>
+                    <input type="text"
+                           name="last_name"
+                           class="form-control"
+                           value="{{ $member->last_name }}">
+                </div>
+
+                <div>
+                    <label class="form-label">Contact</label>
+                    <input type="text"
+                           name="contact"
+                           class="form-control"
+                           value="{{ $member->contact }}">
+                </div>
+
+                <div>
+                    <label class="form-label">Seller ID</label>
+                    <input type="text"
+                           class="form-control"
+                           value="{{ $member->seller_id }}"
+                           readonly>
+                </div>
+
+                <div>
+                    <label class="form-label">Sponsor ID</label>
+                    <input type="text"
+                           class="form-control"
+                           value="{{ $member->sponsor_id }}"
+                           readonly>
+                </div>
+
+                <div>
+                    <label class="form-label">City</label>
+                    <input type="text"
+                           name="city"
+                           class="form-control"
+                           value="{{ $member->city }}">
+                </div>
+
+                <div>
+                    <label class="form-label">Date Of Joining</label>
+                    <input type="date"
+                           name="date_of_joining"
+                           class="form-control"
+                           value="{{ optional($member->date_of_joining)->format('Y-m-d') }}">
+                </div>
+
+                <div>
+                    <label class="form-label">Aadhar No</label>
+                    <input type="text"
+                           name="aadhar_no"
+                           class="form-control"
+                           value="{{ $member->aadhar_no }}">
+                </div>
+
+                <div style="grid-column:span 2;">
+                    <label class="form-label">Address</label>
+                    <textarea name="address"
+                              rows="3"
+                              class="form-control">{{ $member->address }}</textarea>
+                </div>
+
+            </div>
+
+            <div style="margin-top:25px;display:flex;gap:10px;">
+                <a href="{{ route('orders.index') }}"
+                   class="btn-back">
+                    Back
+                </a>
+
+                <button type="submit"
+                        class="btn-save">
+                    Save Changes
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
 
-<div class="card card-pad" style="max-width:400px;">
-    <h3 style="margin:0 0 6px;color:var(--green-800);">Update Status</h3>
-    <p style="color:#888;font-size:13px;margin-bottom:20px;">{{ $order->order_no }} — {{ $order->member->full_name }}</p>
-
-    <form method="POST" action="{{ route('orders.action.update', $order) }}">
-        @csrf @method('PUT')
-        <div style="margin-bottom:20px;">
-            <label class="form-label">Status *</label>
-            <select name="status" required class="form-control" style="height:38px;">
-                @foreach(['pending','processing','delivered','cancelled'] as $s)
-                <option value="{{ $s }}" {{ $order->status == $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;">
-            <a href="{{ route('orders.index') }}" style="padding:10px 22px;border:1px solid #ddd;border-radius:8px;text-decoration:none;color:#555;font-size:13px;font-weight:600;">Close</a>
-            <button type="submit" style="padding:10px 22px;border:none;border-radius:8px;background:var(--green-700);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Update</button>
-        </div>
-    </form>
-</div>
 @endsection

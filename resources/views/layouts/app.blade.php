@@ -225,9 +225,14 @@
         </div>
 
         <nav class="sidebar-nav">
-            <div class="nav-section-label">Dashboard</div>
+           <div class="nav-section-label"></div>
 
-            <a href="{{ route('members.index') }}"
+<a href="{{ route('dashboard') }}"
+   class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+    <i class="fas fa-chart-pie"></i> Dashboard
+</a>
+
+<a href="{{ route('members.index') }}"
                class="nav-item {{ request()->routeIs('members.*') ? 'active' : '' }}">
                 <i class="fas fa-users"></i> Members
             </a>

@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('members', function (Blueprint $table) {
-            $table->string('parent_id')->nullable()->after('sponsor_id');
+           // $table->string('parent_id')->nullable()->after('sponsor_id');
         });
     }
 

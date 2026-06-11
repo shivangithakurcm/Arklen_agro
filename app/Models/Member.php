@@ -62,7 +62,7 @@ class Member extends Authenticatable
                     : null;
 
     // ← Pehla order check (reverse mein bhi same check)
-    $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() === 1;
+    $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() <= 1;
 
     if ($directParent) {
         $amount = $pct('direct_commission');
@@ -181,5 +181,23 @@ class Member extends Authenticatable
             $level2Parent->increment('balance',           $amount);
         }
     }
+}
+
+public static function generateSellerId(): string
+{
+    do {
+        $last = self::where('seller_id', 'like', 'MLM%')
+                    ->orderByRaw('CAST(SUBSTRING(seller_id, 4) AS UNSIGNED) DESC')
+                    ->value('seller_id');
+
+        $nextNumber = $last
+            ? (int) substr($last, 3) + 1
+            : 1001;
+
+        $newId = 'MLM' . $nextNumber;
+
+    } while (self::where('seller_id', $newId)->exists());
+
+    return $newId;
 }
 }

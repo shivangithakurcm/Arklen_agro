@@ -37,15 +37,31 @@ class OrderController extends Controller
         return view('orders.index', compact('orders', 'members', 'products'));
     }
 
-  public function store(Request $request)
+    public function create()
 {
-    $product = Product::find($request->product_id);
+    $members  = Member::orderBy('first_name')->get();
+    $products = Product::all();
+    return view('orders.create', compact('members', 'products'));
+}
+public function invoice(Order $order)
+{
+    return view('orders.invoice', compact('order'));
+}
+public function show(Order $order)
+{
+    $order->load(['member', 'product', 'subOrders']);
+
+    return view('orders.order_show', compact('order'));
+}
+ public function store(Request $request)
+{
+    $product = Product::first(); // ← sirf ek product hai, directly lo
     $qty     = $request->order_quantity ?? 1;
 
     $order = Order::create([
         'order_no'       => 'ORD-' . strtoupper(uniqid()),
         'member_id'      => $request->member_id,
-        'product_id'     => $request->product_id,
+        'product_id'     => $product->id,  // ← hardcode
         'order_quantity' => $qty,
         'order_date'     => $request->order_date,
         'order_value'    => $product->product_price,
@@ -58,11 +74,13 @@ class OrderController extends Controller
 
     $member = Member::find($order->member_id);
     if ($member) {
-        $member->distributeCommission($product, $qty); // ← qty pass
+        $member->distributeCommission($product, $qty);
     }
 
     return redirect()->route('orders.index')->with('success', 'Order created successfully!');
 }
+
+
     public function edit(Order $order)
     {
         $members  = Member::select('id','first_name','last_name','seller_id')->get();
@@ -107,10 +125,12 @@ class OrderController extends Controller
 
     return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
 }
-    public function action(Order $order)
-    {
-        return view('orders.action', compact('order'));
-    }
+  public function action(Order $order)
+{
+    $member = $order->member;
+
+    return view('orders.action', compact('order', 'member'));
+}
 
     public function actionUpdate(Request $request, Order $order)
     {

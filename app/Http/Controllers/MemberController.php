@@ -63,8 +63,7 @@ class MemberController extends Controller
     $data['password'] = Hash::make($request->password);
     $data['position'] = $leg;
     $data['seller_id'] = Member::generateSellerId();
-    dd($data['seller_id']); // yahan lagana hai
-
+   
 
     if ($request->filled('sponsor_id')) {
         $data['parent_id'] = $this->findAvailableParent($request->sponsor_id, $leg);
