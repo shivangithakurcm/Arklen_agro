@@ -132,6 +132,85 @@
 </div>
 
 @push('scripts')
-$(`#ss-${idx}`).select2({...});
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+const sponsors = @json($members->map(fn($m) => ['id' => $m->seller_id, 'text' => $m->seller_id . ' — ' . $m->full_name])->values());
+let rowCount = 0;
+
+function addRow(prefill = {}) {
+    rowCount++;
+    const idx = rowCount;
+    const tbody = document.getElementById('rowsBody');
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + idx;
+    tr.innerHTML = `
+        <td class="rnum">${idx}</td>
+        <td><input type="text"   name="rows[${idx}][name]"   class="ri" placeholder="Full name"  value="${prefill.name   || ''}" autocomplete="off"></td>
+        <td><input type="text"   name="rows[${idx}][aadhar]" class="ri" placeholder="12-digit"   value="${prefill.aadhar || ''}" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></td>
+        <td><input type="text"   name="rows[${idx}][mobile]" class="ri" placeholder="Mobile"     value="${prefill.mobile || ''}" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></td>
+       <td>
+    <input type="text" name="rows[${idx}][sponsor_id]" class="ri"
+        placeholder="e.g. MLM1001"
+        value="${prefill.sponsor_id || ''}"
+        oninput="this.value=this.value.toUpperCase()"
+        autocomplete="off">
+</td>
+        <td>
+            <select name="rows[${idx}][leg]" class="leg-sel">
+                <option value="left"  ${prefill.leg === 'left'  ? 'selected' : ''}>◀ Left</option>
+                <option value="right" ${prefill.leg === 'right' ? 'selected' : ''}>▶ Right</option>
+            </select>
+        </td>
+        <td><input type="number" name="rows[${idx}][amount]" class="ri" placeholder="0.00" min="0" step="0.01" value="${prefill.amount || ''}" oninput="recalc()" style="font-weight:700;color:#3a6110;"></td>
+        <td>
+            <div class="rac">
+                <button type="button" class="rbtn rbtn-del" onclick="removeRow(${idx})" title="Remove">−</button>
+                <button type="button" class="rbtn rbtn-add" onclick="addRow()"          title="Add">+</button>
+            </div>
+        </td>`;
+    tbody.appendChild(tr);
+
+    // move the hidden select into the .sponsor-sw div for Select2
+    const sw = tr.querySelector(`.sponsor-sw-${idx}`);
+    const sel = document.getElementById(`ss-${idx}`);
+    sw.appendChild(sel);
+    sel.style.display = '';
+
+    $(`#ss-${idx}`).select2({
+        data: [{ id: '', text: '-- Select --' }, ...sponsors],
+        placeholder: 'Search sponsor…',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // prefill sponsor select
+    if (prefill.sponsor_id) {
+        $(`#ss-${idx}`).val(prefill.sponsor_id).trigger('change');
+    }
+
+    renum();
+}
+
+function removeRow(idx) {
+    if (document.querySelectorAll('#rowsBody tr').length <= 1) return;
+    document.getElementById('row-' + idx)?.remove();
+    renum(); recalc();
+}
+function renum() {
+    document.querySelectorAll('#rowsBody tr').forEach((tr, i) => {
+        const c = tr.querySelector('.rnum');
+        if (c) c.textContent = i + 1;
+    });
+}
+function recalc() {
+    let t = 0;
+    document.querySelectorAll('#rowsBody input[name$="[amount]"]').forEach(i => t += parseFloat(i.value) || 0);
+    document.getElementById('grandTotal').textContent = '₹' + t.toFixed(2);
+}
+
+// start with one row
+addRow();
+</script>
 @endpush
 @endsection
