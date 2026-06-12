@@ -48,7 +48,7 @@ function buildTree(sellerId, depth) {
     const node = members[sellerId];
     if (!node) return '';
 
-    const name = node.first_name + ' ' + node.last_name;
+   const name = node.first_name + (node.last_name ? ' ' + node.last_name : '');
     const allMembers = Object.values(members);
    const left  = allMembers.find(m => m.parent_id === sellerId && m.position === 'left');
 const right = allMembers.find(m => m.parent_id === sellerId && m.position === 'right');

@@ -242,19 +242,23 @@
                 <i class="fas fa-box"></i> Orders
             </a>
 
-            <div class="nav-item nav-dropdown-toggle {{ request()->routeIs('products.*') ? 'open' : '' }}"
+          <div class="nav-item nav-dropdown-toggle {{ request()->routeIs('products.*') || request()->routeIs('cities.*') ? 'open' : '' }}"
                  onclick="toggleDropdown(this)">
                 <i class="fas fa-layer-group"></i>
                 Master
                 <i class="fas fa-chevron-down dropdown-arrow"></i>
             </div>
 
-            <div class="nav-dropdown {{ request()->routeIs('products.*') ? 'open' : '' }}">
-                <a href="{{ route('products.index') }}"
-                   class="nav-item nav-sub-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
-                    <i class="fas fa-seedling"></i> Product
-                </a>
-            </div>
+           <div class="nav-dropdown {{ request()->routeIs('products.*') || request()->routeIs('cities.*') ? 'open' : '' }}">
+    <a href="{{ route('products.index') }}"
+       class="nav-item nav-sub-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
+        <i class="fas fa-seedling"></i> Product
+    </a>
+    <a href="{{ route('cities.index') }}"
+       class="nav-item nav-sub-item {{ request()->routeIs('cities.*') ? 'active' : '' }}">
+        <i class="fas fa-city"></i> City
+    </a>
+</div>
 
             <a href="{{ route('tree') }}"
                class="nav-item {{ request()->routeIs('tree') ? 'active' : '' }}">

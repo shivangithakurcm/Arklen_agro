@@ -14,6 +14,7 @@ class SubOrder extends Model
         'sponsor_id',
         'leg',
         'amount',
+        'product_id',
     ];
 
     public function order()

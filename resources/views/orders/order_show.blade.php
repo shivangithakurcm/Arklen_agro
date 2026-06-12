@@ -5,7 +5,7 @@
 @section('content')
 <style>
 /* ── layout ── */
-.od-wrap{max-width:1000px;margin:0 auto;}
+.od-wrap{max-width:1100px;margin:0 auto;}
 
 /* ── top bar ── */
 .od-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
@@ -42,11 +42,9 @@
 .od-table{width:100%;border-collapse:collapse;}
 .od-table thead tr{background:#f7fbf2;}
 .od-table th{font-size:11px;font-weight:700;color:#7a9a50;text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;text-align:left;border-bottom:1px solid #eef5e4;white-space:nowrap;}
-.od-table th:last-child{text-align:right;}
 .od-table td{padding:13px 16px;font-size:13px;color:#333;border-bottom:1px solid #f8f8f8;vertical-align:middle;}
 .od-table tbody tr:last-child td{border-bottom:none;}
 .od-table tbody tr:hover td{background:#fafff5;}
-.od-table td:last-child{text-align:right;font-weight:700;color:#3a6110;}
 .od-table .sno{color:#bbb;font-weight:700;font-size:12px;}
 .leg-badge-left{display:inline-block;background:#EAF3DE;color:#3a6110;border:1px solid #c0dd97;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
 .leg-badge-right{display:inline-block;background:#fff3e0;color:#b45309;border:1px solid #fcd59a;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
@@ -55,6 +53,11 @@
 .od-grand-row td{padding:12px 16px;background:#f7fbf2;font-size:13px;}
 .od-grand-label{font-weight:700;color:#555;text-align:right;}
 .od-grand-val{font-size:16px;font-weight:800;color:#3a6110;text-align:right;}
+
+/* ── action column ── */
+.btn-activate{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#4b7c20,#6db82a);color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;box-shadow:0 2px 6px rgba(75,124,32,.3);transition:all .15s;white-space:nowrap;}
+.btn-activate:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(75,124,32,.4);color:#fff;}
+.badge-registered{display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
 </style>
 
 <div class="od-wrap">
@@ -76,7 +79,7 @@
             <span class="badge-{{ $order->status }}">{{ ucfirst($order->status) }}</span>
         </div>
         <div class="od-placed">
-            Placed on {{ $order->order_date->format('d/m/Y') }}
+            Placed on {{ $order->order_date ? $order->order_date->format('d/m/Y') : '—' }}
             @if($order->created_at)
                 at {{ $order->created_at->format('h:i A') }}
             @endif
@@ -116,38 +119,53 @@
                         <th>Sponsor ID</th>
                         <th>Leg</th>
                         <th style="text-align:right;">Purchase Amount</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
                 </thead>
-              <tbody>
-    @forelse($order->subOrders as $i => $sub)
-    <tr>
-        <td class="sno">{{ $i + 1 }}</td>
-        <td style="font-weight:600;">{{ $sub->name }}</td>
-        <td style="font-family:monospace;font-size:12px;">{{ $sub->aadhar ?? '—' }}</td>
-        <td>{{ $sub->mobile ?? '—' }}</td>
-        <td>
-            <span style="font-weight:600;color:#1a56b0;">{{ $sub->sponsor_id ?? '—' }}</span>
-        </td>
-        <td>
-            @if($sub->leg === 'left')
-                <span class="leg-badge-left">◀ Left</span>
-            @elseif($sub->leg === 'right')
-                <span class="leg-badge-right">▶ Right</span>
-            @else
-                <span style="color:#aaa;">—</span>
-            @endif
-        </td>
-        <td>₹{{ number_format($sub->amount, 0) }}</td>
-    </tr>
-    @empty
-    <tr>
-        <td colspan="7" style="text-align:center;padding:30px;color:#888;">No line items found</td>
-    </tr>
-    @endforelse
-</tbody>
+                <tbody>
+                    @forelse($order->subOrders as $i => $sub)
+                    <tr>
+                        <td class="sno">{{ $i + 1 }}</td>
+                        <td style="font-weight:600;">{{ $sub->name }}</td>
+                        <td style="font-family:monospace;font-size:12px;">{{ $sub->aadhar ?? '—' }}</td>
+                        <td>{{ $sub->mobile ?? '—' }}</td>
+                        <td>
+                            <span style="font-weight:600;color:#1a56b0;">{{ $sub->sponsor_id ?? '—' }}</span>
+                        </td>
+                        <td>
+                            @if($sub->leg === 'left')
+                                <span class="leg-badge-left">◀ Left</span>
+                            @elseif($sub->leg === 'right')
+                                <span class="leg-badge-right">▶ Right</span>
+                            @else
+                                <span style="color:#aaa;">—</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;font-weight:700;color:#3a6110;">
+                            ₹{{ number_format($sub->amount, 0) }}
+                        </td>
+                        <td style="text-align:center;">
+                            @if($sub->aadhar && in_array($sub->aadhar, $registeredAadhars))
+                                <span class="badge-registered">
+                                    <i class="fas fa-check-circle"></i> Registered
+                                </span>
+                            @else
+                               <a href="{{ route('orders.action', $order) }}"
+   class="btn-activate">
+    <i class="fas fa-user-plus"></i> Activate
+</a>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" style="text-align:center;padding:30px;color:#888;">No line items found</td>
+                    </tr>
+                    @endforelse
+                </tbody>
                 <tfoot>
                     <tr class="od-grand-row">
-                        <td colspan="6" class="od-grand-label">Grand Total:</td>
+                        <td colspan="7" class="od-grand-label">Grand Total:</td>
                         <td class="od-grand-val">₹{{ number_format($order->subOrders->sum('amount'), 0) }}</td>
                     </tr>
                 </tfoot>

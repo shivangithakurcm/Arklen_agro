@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Models\Product;
 use App\Models\SubOrder;
 use Illuminate\Http\Request;
+use App\Models\City;
 
 class OrderController extends Controller
 {
@@ -29,24 +30,29 @@ class OrderController extends Controller
             $query->whereDate('order_date', '<=', $request->date_to);
         }
 
-        $orders   = $query->latest()->get();
+        $orders   = $query->latest()->paginate(3);
         $members  = Member::select('id','first_name','last_name','seller_id')->get();
         $products = Product::orderBy('product_name')->get();
 
         return view('orders.index', compact('orders', 'members', 'products'));
     }
 
-    public function create()
-    {
-        $members  = Member::orderBy('first_name')->get();
-        $products = Product::all();
-        return view('orders.create', compact('members', 'products'));
-    }
+   public function create()
+{
+    $members  = Member::orderBy('first_name')->get();
+    $products = Product::all();
+    $cities   = City::orderBy('name')->get();
+
+    return view('orders.create', compact(
+        'members',
+        'products',
+        'cities'
+    ));
+}
 
     public function store(Request $request)
     {
-        $product = Product::first();
-        $rows    = array_filter($request->rows ?? [], fn($r) => !empty($r['name']));
+        $rows = array_filter($request->rows ?? [], fn($r) => !empty($r['name']));
 
         if (empty($rows)) {
             return back()->withErrors(['rows' => 'Kam se kam ek row bharein.'])->withInput();
@@ -55,16 +61,10 @@ class OrderController extends Controller
         $grandTotal = collect($rows)->sum(fn($r) => floatval($r['amount'] ?? 0));
         $qty        = count($rows);
 
-        // ✅ Punch By — logged in user se Order ka member set karo
-        $punchBy = $request->punch_by
-            ? strtoupper($request->punch_by)
-            : null;
+        // ✅ Punch By
+        $punchBy     = $request->punch_by ? strtoupper($request->punch_by) : null;
+        $orderMember = $punchBy ? Member::where('seller_id', $punchBy)->first() : null;
 
-        $orderMember = $punchBy
-            ? Member::where('seller_id', $punchBy)->first()
-            : null;
-
-        // Fallback — Admin
         if (!$orderMember) {
             $orderMember = Member::where('seller_id', 'ADMIN001')->first();
         }
@@ -73,23 +73,38 @@ class OrderController extends Controller
             return back()->withErrors(['rows' => 'Punch By member not found.'])->withInput();
         }
 
-        // ✅ Order banao — member_id = punch by wala
+        // ✅ Pehli row ka product Order-level ke liye
+        $firstProductId = collect($rows)->first()['product_id'] ?? null;
+        $firstProduct   = ($firstProductId ? Product::find($firstProductId) : null)
+                          ?? Product::first();
+
+        // ✅ Total BV — har row ka apna product se
+        $totalBv = collect($rows)->sum(function ($r) {
+            $p = !empty($r['product_id']) ? Product::find($r['product_id']) : null;
+            return $p
+                ? round(($p->business_value / 100) * floatval($r['amount'] ?? 0), 2)
+                : 0;
+        });
+
+        // ✅ Order create
         $order = Order::create([
             'order_no'       => Order::generateOrderNo(),
             'member_id'      => $orderMember->id,
-            'product_id'     => $product->id,
+            'product_id'     => $firstProduct->id,
             'order_quantity' => $qty,
             'order_date'     => $request->order_date,
             'order_value'    => $grandTotal,
-            'order_product'  => $product->product_name,
+            'order_product'  => $firstProduct->product_name,
             'total_value'    => $grandTotal,
-            'total_bv'       => round(($product->business_value / 100) * $grandTotal, 2),
+            'total_bv'       => $totalBv,
             'status'         => 'pending',
         ]);
 
-        // ✅ Har row ke liye SubOrder + BV update
-        // Commission yahan nahi hogi — Member bante waqt hogi (MemberController@store)
+        // ✅ Har row ke liye SubOrder + BV
         foreach ($rows as $row) {
+            $product = (!empty($row['product_id']) ? Product::find($row['product_id']) : null)
+                       ?? $firstProduct;
+
             SubOrder::create([
                 'order_id'   => $order->id,
                 'name'       => $row['name'],
@@ -98,10 +113,11 @@ class OrderController extends Controller
                 'sponsor_id' => !empty($row['sponsor_id']) ? strtoupper($row['sponsor_id']) : null,
                 'leg'        => $row['leg']       ?? 'left',
                 'amount'     => floatval($row['amount'] ?? 0),
+                'product_id' => $product->id,
             ]);
 
-            // ✅ Sponsor ka BV update
-            if (!empty($row['sponsor_id'])) {
+            // ✅ Sponsor ka BV — us row ke product se
+            if (!empty($row['sponsor_id']) && $product) {
                 $sponsor = Member::where('seller_id', strtoupper($row['sponsor_id']))->first();
                 if ($sponsor) {
                     $bv = round(($product->business_value / 100) * floatval($row['amount'] ?? 0), 2);
@@ -114,13 +130,19 @@ class OrderController extends Controller
             }
         }
 
-        return redirect()->route('orders.index')->with('success', 'Order successfully created!');
+        return redirect()->route('orders.action', $order)->with('success', 'Order successfully created!');
     }
 
     public function show(Order $order)
     {
         $order->load(['member', 'product', 'subOrders']);
-        return view('orders.order_show', compact('order'));
+
+        $subAadhars        = $order->subOrders->pluck('aadhar')->filter()->toArray();
+        $registeredAadhars = Member::whereIn('aadhar_no', $subAadhars)
+                                   ->pluck('aadhar_no')
+                                   ->toArray();
+
+        return view('orders.order_show', compact('order', 'registeredAadhars'));
     }
 
     public function invoice(Order $order)

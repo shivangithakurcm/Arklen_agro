@@ -12,8 +12,6 @@
 .badge-delivered{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
 .badge-cancelled{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
 .action-link{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;transition:all .15s;}
-
-/* suborder rows */
 .sub-row td{background:#f8fdf4;font-size:12px;color:#555;border-bottom:1px solid #f0f0f0;}
 .sub-row:last-child td{border-bottom:2px solid #e0edcc;}
 .leg-l{background:#EAF3DE;color:#3a6110;border:1px solid #c0dd97;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
@@ -58,7 +56,6 @@
                     <th>S.No</th>
                     <th>Order No</th>
                     <th>Punch By</th>
-                   <!-- <th>Qty</th>-->
                     <th>Total Price</th>
                     <th>Date</th>
                     <th>Status</th>
@@ -72,7 +69,8 @@
                     <td style="text-align:center;color:#4b7c20;font-size:13px;">
                         <i class="fas fa-chevron-down" id="icon-{{ $order->id }}"></i>
                     </td>
-                    <td>{{ $i + 1 }}</td>
+                    {{-- ✅ S.No pagination-aware --}}
+                    <td>{{ $orders->firstItem() + $i }}</td>
                     <td>
                         <span style="font-weight:700;color:#1a56b0;font-family:monospace;">
                             {{ $order->order_no }}
@@ -82,13 +80,12 @@
                         <div style="font-weight:600;font-size:13px;">{{ $order->member->full_name }}</div>
                         <div style="font-size:11px;color:#888;">{{ $order->member->seller_id }}</div>
                     </td>
-                   <!-- <td>{{ $order->subOrders->count() }}</td>-->
                     <td>
                         <span style="font-weight:700;color:#3a6110;">
                             ₹{{ number_format($order->subOrders->sum('amount'), 2) }}
                         </span>
                     </td>
-                    <td>{{ $order->order_date->format('d M Y') }}</td>
+                    <td>{{ $order->order_date ? $order->order_date->format('d M Y') : '—' }}</td>
                     <td>
                         <span class="badge badge-{{ $order->status }}">
                             {{ ucfirst($order->status) }}
@@ -100,11 +97,6 @@
                                class="action-link"
                                style="background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;">
                                 <i class="fas fa-eye"></i> View
-                            </a>
-                            <a href="{{ route('orders.action', $order) }}"
-                               class="action-link"
-                               style="background:#dcfce7;border:1px solid #bbf7d0;color:#166534;">
-                                <i class="fas fa-circle-check"></i> Active
                             </a>
                         </div>
                     </td>
@@ -164,6 +156,12 @@
             </tbody>
         </table>
     </div>
+
+    {{-- ✅ Pagination --}}
+    <div style="margin-top:15px;">
+        {{ $orders->withQueryString()->links('vendor.pagination.custom') }}
+    </div>
+
 </div>
 
 <script>

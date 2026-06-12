@@ -25,28 +25,33 @@
 .btn-green:hover{background:#3a6110;}
 .btn-grey{background:#e8e8e8;color:#444;}
 .btn-grey:hover{background:#ddd;}
-
 .ort-wrap{overflow-x:auto;border:1px solid #e8f0dc;border-radius:12px;}
-.ort{width:100%;border-collapse:collapse;min-width:860px;}
+.ort{width:100%;border-collapse:collapse;min-width:1000px;}
 .ort thead tr{background:#f4faee;}
 .ort th{font-size:11px;font-weight:700;color:#5a7c30;text-transform:uppercase;letter-spacing:.06em;padding:10px;border-bottom:2px solid #e0edcc;text-align:left;white-space:nowrap;}
 .ort td{padding:7px;vertical-align:middle;border-bottom:1px solid #f5f5f5;}
 .ort tbody tr:last-child td{border-bottom:none;}
 .ort tbody tr:hover td{background:#fafff5;}
 .rnum{font-size:12px;color:#bbb;font-weight:700;text-align:center;width:30px;}
-
 .ri{width:100%;padding:7px 9px;border:1px solid #dde8cc;border-radius:7px;font-size:12px;outline:none;box-sizing:border-box;transition:border-color .15s;background:#fff;}
 .ri:focus{border-color:#4b7c20;box-shadow:0 0 0 2px rgba(75,124,32,.10);}
-
 .leg-sel{padding:7px 9px;border:1px solid #dde8cc;border-radius:7px;font-size:12px;outline:none;width:95px;cursor:pointer;background:#fff;}
 .leg-sel:focus{border-color:#4b7c20;}
-
 .rbtn{width:30px;height:30px;border-radius:8px;border:none;cursor:pointer;font-size:15px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;}
 .rbtn-add{background:#dcfce7;color:#166534;border:1.5px dashed #6ee7a0;}
 .rbtn-add:hover{background:#bbf7d0;}
 .rbtn-del{background:#fee2e2;color:#991b1b;border:1.5px dashed #fca5a5;}
 .rbtn-del:hover{background:#fecaca;}
 .rac{display:flex;gap:5px;align-items:center;justify-content:center;}
+
+.product-bar{background:#f4faee;border:1px solid #d0e8b0;border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.product-bar-item{display:flex;flex-direction:column;gap:2px;}
+.product-bar-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;}
+.product-bar-val{font-size:13px;font-weight:700;color:#3a6110;}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;}
+.modal-box{background:#fff;border-radius:14px;padding:24px;max-width:600px;width:95%;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 </style>
 
 <div style="max-width:1200px;margin:0 auto;">
@@ -55,7 +60,6 @@
         <a href="{{ route('orders.index') }}" class="page-btn btn-grey">
             <i class="fas fa-arrow-left"></i> Back to Orders
         </a>
-
         <div style="margin-left:auto;background:#f4faee;border:1px solid #d0e8b0;border-radius:10px;padding:8px 16px;display:flex;align-items:center;gap:8px;">
             <i class="fas fa-user-circle" style="color:#4b7c20;font-size:16px;"></i>
             <div>
@@ -71,8 +75,11 @@
         @csrf
         <input type="hidden" name="punch_by" value="{{ auth()->user()->seller_id }}">
 
-        <div class="card card-pad" style="padding:0;overflow:hidden;">
+       
 
+              
+
+        <div class="card card-pad" style="padding:0;overflow:hidden;">
             <div class="ort-wrap">
                 <table class="ort">
                     <thead>
@@ -81,6 +88,7 @@
                             <th style="min-width:130px;">Name</th>
                             <th style="min-width:125px;">Aadhar No</th>
                             <th style="min-width:115px;">Mobile No</th>
+                            <th style="min-width:160px;">Product</th>   {{-- ✅ NEW --}}
                             <th style="min-width:200px;">Sponsor</th>
                             <th style="min-width:100px;">Leg</th>
                             <th style="min-width:120px;">Purchase Amt (₹)</th>
@@ -94,7 +102,7 @@
             <div style="padding:16px 18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-top:1px solid #eef5e4;">
                 <div>
                     <label class="form-label">Order Date *</label>
-                    <input type="date" name="order_date"
+                    <input type="date" name="order_date" id="orderDate"
                         value="{{ old('order_date', date('Y-m-d')) }}"
                         required class="form-control" style="max-width:180px;">
                 </div>
@@ -109,7 +117,6 @@
                     </button>
                 </div>
             </div>
-
         </div>
 
         @if($errors->any())
@@ -117,8 +124,81 @@
             <strong>⚠</strong> {{ $errors->first() }}
         </div>
         @endif
-
     </form>
+</div>
+
+{{-- Member Register Modal --}}
+<div id="registerModal" class="modal-overlay">
+    <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h4 style="margin:0;color:#3a6110;"><i class="fas fa-user-plus"></i> Register Member</h4>
+            <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;line-height:1;">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ route('members.store') }}">
+            @csrf
+            <input type="hidden" name="from_order" value="1">
+            <input type="hidden" name="date_of_joining" id="modal_date">
+
+            <div class="modal-grid">
+                <div>
+                    <label class="form-label">First Name *</label>
+                    <input type="text" name="first_name" id="modal_first_name" class="form-control" required>
+                </div>
+                <div>
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" id="modal_last_name" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">Mobile *</label>
+                    <input type="text" name="contact" id="modal_mobile" class="form-control" required maxlength="10">
+                </div>
+                <div>
+                    <label class="form-label">Aadhar No</label>
+                    <input type="text" name="aadhar_no" id="modal_aadhar" class="form-control" maxlength="12">
+                </div>
+                <div>
+                    <label class="form-label">Sponsor ID</label>
+                    <input type="text" name="sponsor_id" id="modal_sponsor" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">Leg</label>
+                    <select name="sponsor_leg" id="modal_leg" class="form-control">
+                        <option value="left">◀ Left</option>
+                        <option value="right">▶ Right</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">City</label>
+                    <select name="city" id="citySelect" class="form-control">
+    <option value="">-- Select City --</option>
+    @foreach($cities as $city)
+        <option value="{{ $city->name }}">{{ $city->name }}</option>
+    @endforeach
+</select>
+                </div>
+                <div>
+                    <label class="form-label">Address</label>
+                    <input type="text" name="address" class="form-control" placeholder="Address">
+                </div>
+                <div>
+                    <label class="form-label">Password *</label>
+                    <input type="password" name="password" class="form-control" required placeholder="Min 4 chars">
+                </div>
+                <div>
+                    <label class="form-label">Confirm Password *</label>
+                    <input type="password" name="password_confirmation" class="form-control" required placeholder="Re-enter">
+                </div>
+            </div>
+
+            <div style="margin-top:16px;display:flex;gap:10px;">
+                <button type="submit" class="page-btn btn-green">
+                    <i class="fas fa-user-plus"></i> Register Member
+                </button>
+                <button type="button" onclick="closeModal()" class="page-btn btn-grey">Cancel</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @push('scripts')
@@ -132,7 +212,16 @@ const sponsorOptions = [
     @endforeach
 ];
 
+// ✅ Product options for each row
+const productOptions = [
+    @foreach($products as $p)
+    { id: '{{ $p->id }}', text: '{{ $p->product_name }} \u2014 \u20B9{{ number_format($p->product_price, 0) }}', price: '{{ $p->product_price }}' },
+    @endforeach
+];
+
 let rowCount = 0;
+
+
 
 function addRow(prefill = {}) {
     rowCount++;
@@ -141,12 +230,15 @@ function addRow(prefill = {}) {
     const tr = document.createElement('tr');
     tr.id = 'row-' + idx;
 
-    // ✅ Blade comment JS ke andar nahi — clean HTML string
     tr.innerHTML =
         '<td class="rnum">' + idx + '</td>' +
         '<td><input type="text" name="rows[' + idx + '][name]" class="ri" placeholder="Full name" value="' + (prefill.name || '') + '" autocomplete="off"></td>' +
         '<td><input type="text" name="rows[' + idx + '][aadhar]" class="ri" placeholder="12-digit" value="' + (prefill.aadhar || '') + '" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,12)"></td>' +
         '<td><input type="text" name="rows[' + idx + '][mobile]" class="ri" placeholder="Mobile" value="' + (prefill.mobile || '') + '" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,10)"></td>' +
+
+        // ✅ Product dropdown — Sponsor se pehle
+        '<td style="min-width:160px;"><select name="rows[' + idx + '][product_id]" id="rowproduct-' + idx + '" style="width:100%;"><option value="">-- Select --</option></select></td>' +
+
         '<td style="min-width:200px;"><select name="rows[' + idx + '][sponsor_id]" id="sponsor-' + idx + '" style="width:100%;"><option value="">-- Select Sponsor --</option></select></td>' +
         '<td><select name="rows[' + idx + '][leg]" class="leg-sel">' +
             '<option value="left" ' + ((prefill.leg === 'right') ? '' : 'selected') + '>&#9664; Left</option>' +
@@ -156,10 +248,30 @@ function addRow(prefill = {}) {
         '<td><div class="rac">' +
             '<button type="button" class="rbtn rbtn-del" onclick="removeRow(' + idx + ')" title="Remove">&minus;</button>' +
             '<button type="button" class="rbtn rbtn-add" onclick="addRow()" title="Add">+</button>' +
+            '<button type="button" class="rbtn" onclick="openModal(' + idx + ')" title="Register Member" style="background:#dcfce7;color:#166634;border:1.5px solid #bbf7d0;"><i class="fas fa-circle-check"></i></button>' +
         '</div></td>';
 
     tbody.appendChild(tr);
 
+    // ✅ Product Select2
+    $(`#rowproduct-${idx}`).select2({
+        data: [{ id: '', text: '-- Select --' }, ...productOptions.map(p => ({ id: p.id, text: p.text }))],
+        placeholder: 'Search product...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $(`#row-${idx}`)
+    }).on('change', function() {
+        const selected = productOptions.find(p => p.id == $(this).val());
+        if (selected) {
+            const amtInput = document.querySelector(`#row-${idx} input[name$="[amount]"]`);
+            if (amtInput && !amtInput.value) {
+                amtInput.value = parseFloat(selected.price).toFixed(2);
+                recalc();
+            }
+        }
+    });
+
+    // ✅ Sponsor Select2
     $(`#sponsor-${idx}`).select2({
         data: sponsorOptions,
         placeholder: 'Search sponsor...',
@@ -171,9 +283,39 @@ function addRow(prefill = {}) {
     if (prefill.sponsor_id) {
         $(`#sponsor-${idx}`).val(prefill.sponsor_id).trigger('change');
     }
+    if (prefill.product_id) {
+        $(`#rowproduct-${idx}`).val(prefill.product_id).trigger('change');
+    }
 
     renum();
 }
+
+function openModal(idx) {
+    const row = document.getElementById('row-' + idx);
+    const name    = row.querySelector('input[name$="[name]"]').value;
+    const mobile  = row.querySelector('input[name$="[mobile]"]').value;
+    const aadhar  = row.querySelector('input[name$="[aadhar]"]').value;
+    const sponsor = $(`#sponsor-${idx}`).val() || '';
+    const leg     = row.querySelector('select[name$="[leg]"]').value;
+
+    document.getElementById('modal_first_name').value = name.split(' ')[0] || '';
+    document.getElementById('modal_last_name').value  = name.split(' ').slice(1).join(' ') || '';
+    document.getElementById('modal_mobile').value     = mobile;
+    document.getElementById('modal_aadhar').value     = aadhar;
+    document.getElementById('modal_sponsor').value    = sponsor;
+    document.getElementById('modal_leg').value        = leg;
+    document.getElementById('modal_date').value       = document.getElementById('orderDate').value;
+
+    document.getElementById('registerModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('registerModal').style.display = 'none';
+}
+
+document.getElementById('registerModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
 
 function removeRow(idx) {
     if (document.querySelectorAll('#rowsBody tr').length <= 1) return;
@@ -193,6 +335,10 @@ function recalc() {
     document.querySelectorAll('#rowsBody input[name$="[amount]"]').forEach(i => t += parseFloat(i.value) || 0);
     document.getElementById('grandTotal').textContent = '₹' + t.toFixed(2);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateProductBar();
+});
 
 addRow();
 </script>

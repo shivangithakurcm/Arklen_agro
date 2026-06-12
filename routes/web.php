@@ -6,6 +6,7 @@ use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CityController;
 
 // ── Auth ──────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -17,7 +18,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+   
     // ── Members ────────────────────────────────────────
+    Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
     Route::get('/members',                      [MemberController::class, 'index'])->name('members.index');
     Route::post('/members',                     [MemberController::class, 'store'])->name('members.store');
     Route::get('/members/{member}',             [MemberController::class, 'show'])->name('members.show');
@@ -37,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     // ── Tree ──────────────────────────────────────────
     Route::get('/tree', [MemberController::class, 'tree'])->name('tree');
+    Route::resource('cities', CityController::class)->only(['index', 'store', 'destroy']);
 
     // ── Orders ────────────────────────────────────────
     Route::get('orders/create',             [OrderController::class, 'create'])->name('orders.create');

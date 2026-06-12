@@ -32,8 +32,39 @@ class MemberController extends Controller
                               ->get(['id', 'seller_id', 'first_name', 'last_name']);
         $products     = Product::orderBy('product_name')->get();
         $nextSellerId = Member::generateSellerId();
+        $prefill      = [];
 
-        return view('members.index', compact('members', 'allMembers', 'products', 'nextSellerId'));
+        return view('members.index', compact('members', 'allMembers', 'products', 'nextSellerId', 'prefill'));
+    }
+
+    public function create(Request $request)
+    {
+        $query = Member::query();
+
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('first_name', 'like', '%'.$request->search.'%')
+                  ->orWhere('last_name',  'like', '%'.$request->search.'%')
+                  ->orWhere('contact',    'like', '%'.$request->search.'%');
+            });
+        }
+
+        $members      = $query->latest()->paginate(5);
+        $allMembers   = Member::where('is_active', 1)
+                              ->orderBy('first_name')
+                              ->get(['id', 'seller_id', 'first_name', 'last_name']);
+        $products     = Product::orderBy('product_name')->get();
+        $nextSellerId = Member::generateSellerId();
+
+        $prefill = [
+            'first_name' => $request->name,
+            'aadhar_no'  => $request->aadhar,
+            'contact'    => $request->mobile,
+            'sponsor_id' => $request->sponsor_id,
+            'position'   => $request->leg ?? 'left',
+        ];
+
+        return view('members.index', compact('members', 'allMembers', 'products', 'nextSellerId', 'prefill'));
     }
 
     public function store(Request $request)
@@ -42,7 +73,7 @@ class MemberController extends Controller
         if ($request->filled('aadhar_no')) {
             $exists = Member::where('aadhar_no', $request->aadhar_no)->first();
             if ($exists) {
-                return back()->withErrors(['aadhar_no' => 'Ye Aadhar already registered hai: ' . $exists->seller_id])->withInput();
+                return back()->withErrors(['aadhar_no' => 'Aadhar already registered: ' . $exists->seller_id])->withInput();
             }
         }
 
@@ -50,15 +81,15 @@ class MemberController extends Controller
         if ($request->filled('contact')) {
             $exists = Member::where('contact', $request->contact)->first();
             if ($exists) {
-                return back()->withErrors(['contact' => 'Ye Mobile already registered hai: ' . $exists->seller_id])->withInput();
+                return back()->withErrors(['contact' => 'Mobile already registered: ' . $exists->seller_id])->withInput();
             }
         }
 
         $validator = \Validator::make($request->all(), [
             'first_name'      => 'required|string|max:100',
-            'last_name'       => 'nullable|string|max:100', // ✅ nullable
+            'last_name'       => 'nullable|string|max:100',
             'contact'         => 'required|digits:10',
-            'address'         => 'nullable|string',         // ✅ nullable — form mein blank ho sakta hai
+            'address'         => 'nullable|string',
             'aadhar_no'       => 'nullable|digits:12',
             'city'            => 'nullable',
             'date_of_joining' => 'required|date',
@@ -69,9 +100,7 @@ class MemberController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $leg  = $request->sponsor_leg ?? 'left';
@@ -80,8 +109,23 @@ class MemberController extends Controller
         $data['position']  = $leg;
         $data['seller_id'] = Member::generateSellerId();
 
-        // ✅ product_id — pehla product automatically assign karo
-        $product = Product::first();
+        // ✅ Product — from_order hai toh SubOrder se dhundo
+        $product       = null;
+        $subOrderAmount = 0;
+
+        if ($request->from_order && $request->filled('aadhar_no')) {
+            $subOrder = \App\Models\SubOrder::where('aadhar', $request->aadhar_no)
+                            ->latest()
+                            ->first();
+            if ($subOrder && $subOrder->product_id) {
+                $product        = Product::find($subOrder->product_id);
+                $subOrderAmount = floatval($subOrder->amount ?? 0);
+            }
+        }
+
+        // ✅ Fallback — direct member add par Product::first()
+        $product = $product ?? Product::first();
+
         if ($product) {
             $data['product_id'] = $product->id;
         }
@@ -96,7 +140,6 @@ class MemberController extends Controller
 
         $member = Member::create($data);
 
-        // ✅ User bhi banao/update karo
         \App\Models\User::updateOrCreate(
             ['seller_id' => $data['seller_id']],
             [
@@ -105,14 +148,13 @@ class MemberController extends Controller
             ]
         );
 
-        // ✅ Order create karo + Commission distribute karo
-       if ($product && !$request->from_order) {
-    \App\Models\Order::create([
+        // ✅ Order sirf non-from_order par banao
+        if ($product && !$request->from_order) {
+            \App\Models\Order::create([
                 'order_no'       => 'ORD-' . strtoupper(uniqid()),
                 'member_id'      => $member->id,
                 'product_id'     => $product->id,
                 'order_date'     => $member->date_of_joining,
-               // 'city'           => $member->city,
                 'order_product'  => $product->product_name,
                 'order_quantity' => 1,
                 'order_value'    => $product->product_price,
@@ -120,9 +162,11 @@ class MemberController extends Controller
                 'total_bv'       => round(($product->business_value / 100) * $product->product_price, 2),
                 'status'         => 'delivered',
             ]);
+        }
 
-            // ✅ Commission — sponsor chain ke basis pe
-            $member->distributeCommission($product, 1);
+        // ✅ Commission — sahi product aur sahi amount se
+        if ($product) {
+            $member->distributeCommission($product, 1, $subOrderAmount);
         }
 
         if ($request->from_order) {

@@ -20,7 +20,7 @@ class Member extends Authenticatable
         'team_income', 'pay_income', 'total_income', 'balance',
         'team_bv', 'is_active', 'parent_id', 'product_id',
         'direct_commission', 'level1_commission', 'level2_commission',
-        'new_joinee_income', 'city',  
+        'new_joinee_income', 'city',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -45,62 +45,6 @@ class Member extends Authenticatable
         return $this->belongsTo(Product::class);
     }
 
-    public function reverseCommission(Product $product = null, int $qty = 1)
-{
-    $product = $product ?? $this->product;
-    if (!$product) return;
-
-    $price = ($product->product_price ?? 0) * $qty;
-    $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
-
-  $directParent = Member::where('seller_id', $this->sponsor_id)->first();
-$level1Parent = $directParent
-                ? Member::where('seller_id', $directParent->sponsor_id)->first()
-                : null;
-$level2Parent = $level1Parent
-                ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
-                : null;
-    // ← Pehla order check (reverse mein bhi same check)
-    $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() <= 1;
-
-    if ($directParent) {
-        $amount = $pct('direct_commission');
-        if ($amount > 0) {
-            $directParent->decrement('direct_commission', $amount);
-            $directParent->decrement('total_income',      $amount);
-            $directParent->decrement('balance',           $amount);
-        }
-
-        // ← Sirf pehle order ka reverse
-        if ($isFirstOrder) {
-            $amount = $pct('new_joinee');
-            if ($amount > 0) {
-                $directParent->decrement('new_joinee_income', $amount);
-                $directParent->decrement('total_income',      $amount);
-                $directParent->decrement('balance',           $amount);
-            }
-        }
-    }
-
-    if ($level1Parent) {
-        $amount = $pct('level_1');
-        if ($amount > 0) {
-            $level1Parent->decrement('level1_commission', $amount);
-            $level1Parent->decrement('total_income',      $amount);
-            $level1Parent->decrement('balance',           $amount);
-        }
-    }
-
-    if ($level2Parent) {
-        $amount = $pct('level_2');
-        if ($amount > 0) {
-            $level2Parent->decrement('level2_commission', $amount);
-            $level2Parent->decrement('total_income',      $amount);
-            $level2Parent->decrement('balance',           $amount);
-        }
-    }
-}
-
     public function leftMembers()
     {
         return self::where('parent_id', $this->seller_id)
@@ -122,81 +66,140 @@ $level2Parent = $level1Parent
             : null;
     }
 
-   
+    // ✅ amount parameter add kiya — actual purchase amount se commission
+    public function distributeCommission(Product $product = null, int $qty = 1, float $amount = 0)
+    {
+        $product = $product ?? $this->product;
+        if (!$product) return;
 
-    // ← Product parameter add kiya
-   public function distributeCommission(Product $product = null, int $qty = 1)
-{
-    $product = $product ?? $this->product;
-    if (!$product) return;
+        // ✅ Agar actual amount pass hua toh wahi use karo, warna product price * qty
+        $price = $amount > 0 ? $amount : (($product->product_price ?? 0) * $qty);
 
-    $price = ($product->product_price ?? 0) * $qty;
-    $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
+        $pct = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
 
-  // parent_id → sponsor_id
-$directParent = Member::where('seller_id', $this->sponsor_id)->first();
-$level1Parent = $directParent
-                ? Member::where('seller_id', $directParent->sponsor_id)->first()
-                : null;
-$level2Parent = $level1Parent
-                ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
-                : null;
-    // ← Pehla order check
-    $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() === 1;
+        $directParent = Member::where('seller_id', $this->sponsor_id)->first();
+        $level1Parent = $directParent
+                        ? Member::where('seller_id', $directParent->sponsor_id)->first()
+                        : null;
+        $level2Parent = $level1Parent
+                        ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
+                        : null;
 
-    if ($directParent) {
-        $amount = $pct('direct_commission');
-        if ($amount > 0) {
-            $directParent->increment('direct_commission', $amount);
-            $directParent->increment('total_income',      $amount);
-            $directParent->increment('balance',           $amount);
+        $isFirstOrder = true;
+
+        if ($directParent) {
+            // ✅ Direct Commission
+            $amount_dc = $pct('direct_commission');
+            if ($amount_dc > 0) {
+                $directParent->increment('direct_commission', $amount_dc);
+                $directParent->increment('total_income',      $amount_dc);
+                $directParent->increment('balance',           $amount_dc);
+            }
+
+            // ✅ New Joinee — sirf pehle order par
+            if ($isFirstOrder) {
+                $amount_nj = $pct('new_joinee');
+                if ($amount_nj > 0) {
+                    $directParent->increment('new_joinee_income', $amount_nj);
+                    $directParent->increment('total_income',      $amount_nj);
+                    $directParent->increment('balance',           $amount_nj);
+                }
+            }
         }
 
-        // ← Sirf pehle order pe
-        if ($isFirstOrder) {
-            $amount = $pct('new_joinee');
-            if ($amount > 0) {
-                $directParent->increment('new_joinee_income', $amount);
-                $directParent->increment('total_income',      $amount);
-                $directParent->increment('balance',           $amount);
+        // ✅ Level 1
+        if ($level1Parent) {
+            $amount_l1 = $pct('level_1');
+            if ($amount_l1 > 0) {
+                $level1Parent->increment('level1_commission', $amount_l1);
+                $level1Parent->increment('total_income',      $amount_l1);
+                $level1Parent->increment('balance',           $amount_l1);
+            }
+        }
+
+        // ✅ Level 2
+        if ($level2Parent) {
+            $amount_l2 = $pct('level_2');
+            if ($amount_l2 > 0) {
+                $level2Parent->increment('level2_commission', $amount_l2);
+                $level2Parent->increment('total_income',      $amount_l2);
+                $level2Parent->increment('balance',           $amount_l2);
             }
         }
     }
 
-    if ($level1Parent) {
-        $amount = $pct('level_1');
-        if ($amount > 0) {
-            $level1Parent->increment('level1_commission', $amount);
-            $level1Parent->increment('total_income',      $amount);
-            $level1Parent->increment('balance',           $amount);
+    // ✅ amount parameter add kiya — reverse mein bhi same logic
+    public function reverseCommission(Product $product = null, int $qty = 1, float $amount = 0)
+    {
+        $product = $product ?? $this->product;
+        if (!$product) return;
+
+        $price = $amount > 0 ? $amount : (($product->product_price ?? 0) * $qty);
+
+        $pct = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
+
+        $directParent = Member::where('seller_id', $this->sponsor_id)->first();
+        $level1Parent = $directParent
+                        ? Member::where('seller_id', $directParent->sponsor_id)->first()
+                        : null;
+        $level2Parent = $level1Parent
+                        ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
+                        : null;
+
+        $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() <= 1;
+
+        if ($directParent) {
+            $amount_dc = $pct('direct_commission');
+            if ($amount_dc > 0) {
+                $directParent->decrement('direct_commission', $amount_dc);
+                $directParent->decrement('total_income',      $amount_dc);
+                $directParent->decrement('balance',           $amount_dc);
+            }
+
+            if ($isFirstOrder) {
+                $amount_nj = $pct('new_joinee');
+                if ($amount_nj > 0) {
+                    $directParent->decrement('new_joinee_income', $amount_nj);
+                    $directParent->decrement('total_income',      $amount_nj);
+                    $directParent->decrement('balance',           $amount_nj);
+                }
+            }
+        }
+
+        if ($level1Parent) {
+            $amount_l1 = $pct('level_1');
+            if ($amount_l1 > 0) {
+                $level1Parent->decrement('level1_commission', $amount_l1);
+                $level1Parent->decrement('total_income',      $amount_l1);
+                $level1Parent->decrement('balance',           $amount_l1);
+            }
+        }
+
+        if ($level2Parent) {
+            $amount_l2 = $pct('level_2');
+            if ($amount_l2 > 0) {
+                $level2Parent->decrement('level2_commission', $amount_l2);
+                $level2Parent->decrement('total_income',      $amount_l2);
+                $level2Parent->decrement('balance',           $amount_l2);
+            }
         }
     }
 
-    if ($level2Parent) {
-        $amount = $pct('level_2');
-        if ($amount > 0) {
-            $level2Parent->increment('level2_commission', $amount);
-            $level2Parent->increment('total_income',      $amount);
-            $level2Parent->increment('balance',           $amount);
-        }
+    public static function generateSellerId(): string
+    {
+        do {
+            $last = self::where('seller_id', 'like', 'MLM%')
+                        ->orderByRaw('CAST(SUBSTRING(seller_id, 4) AS UNSIGNED) DESC')
+                        ->value('seller_id');
+
+            $nextNumber = $last
+                ? (int) substr($last, 3) + 1
+                : 1001;
+
+            $newId = 'MLM' . $nextNumber;
+
+        } while (self::where('seller_id', $newId)->exists());
+
+        return $newId;
     }
-}
-
-public static function generateSellerId(): string
-{
-    do {
-        $last = self::where('seller_id', 'like', 'MLM%')
-                    ->orderByRaw('CAST(SUBSTRING(seller_id, 4) AS UNSIGNED) DESC')
-                    ->value('seller_id');
-
-        $nextNumber = $last
-            ? (int) substr($last, 3) + 1
-            : 1001;
-
-        $newId = 'MLM' . $nextNumber;
-
-    } while (self::where('seller_id', $newId)->exists());
-
-    return $newId;
-}
 }
