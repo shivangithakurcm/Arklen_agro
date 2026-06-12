@@ -1,0 +1,97 @@
+.metric-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+}
+
+.metric-card{
+    background:#fff;
+    border-radius:16px;
+    padding:20px;
+    border:1px solid #e2ece7;
+    box-shadow:0 4px 6px rgba(0,0,0,0.05);
+}
+.metric-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.metric-label{
+    font-size:13px;
+    font-weight:600;
+    color:#6b8a7b;
+    text-transform:uppercase;
+}
+
+.metric-icon{
+    width:20px;
+    height:20px;
+    color:#41966a;
+}
+
+.metric-value-wrapper{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:12px;
+}
+
+.metric-value{
+    font-size:30px;
+    font-weight:700;
+    color:#112a1f;
+}
+
+.trend-badge{
+    background:#d1fae5;
+    color:#059669;
+    padding:4px 8px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.commission-card{
+    grid-column:2;
+}
+
+.progress-container{
+    width:100%;
+    height:6px;
+    background:#dfeee7;
+    border-radius:20px;
+    margin-top:15px;
+}
+
+.progress-fill{
+    width:50%;
+    height:100%;
+    background:#41966a;
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+    .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .commission-card {
+        grid-column: span 2;
+    }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    .metric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .commission-card {
+        grid-column: auto;
+    }
+
+    .metric-value {
+        font-size: 24px;
+    }
+}

@@ -16,13 +16,14 @@ class AuthController extends Controller
 
  public function login(Request $request)
 {
+
+    
     $request->validate([
         'user_id'  => 'required|string',
         'password' => 'required|string',
     ]);
 
     $user = User::where('seller_id', $request->user_id)->first();
-
     if (!$user || !Hash::check($request->password, $user->password)) {
         return back()
             ->withErrors(['user_id' => 'Invalid Seller ID or Password.'])
