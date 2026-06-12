@@ -70,7 +70,7 @@ class OrderController extends Controller
         }
 
         if (!$orderMember) {
-            return back()->withErrors(['rows' => 'Punch By member nahi mila.'])->withInput();
+            return back()->withErrors(['rows' => 'Punch By member not found.'])->withInput();
         }
 
         // ✅ Order banao — member_id = punch by wala
