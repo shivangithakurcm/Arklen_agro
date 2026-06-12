@@ -118,58 +118,37 @@
                         <th style="text-align:right;">Purchase Amount</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse($order->subOrders as $i => $sub)
-                    <tr>
-                        <td class="sno">{{ $i + 1 }}</td>
-                        <td style="font-weight:600;">{{ $sub->name }}</td>
-                        <td style="font-family:monospace;font-size:12px;">{{ $sub->aadhar ?? '—' }}</td>
-                        <td>{{ $sub->mobile ?? '—' }}</td>
-                        <td>
-                            <span style="font-weight:600;color:#1a56b0;">{{ $sub->sponsor_id ?? '—' }}</span>
-                        </td>
-                        <td>
-                            @if($sub->leg === 'left')
-                                <span class="leg-badge-left">◀ Left</span>
-                            @elseif($sub->leg === 'right')
-                                <span class="leg-badge-right">▶ Right</span>
-                            @else
-                                <span style="color:#aaa;">—</span>
-                            @endif
-                        </td>
-                        <td>₹{{ number_format($sub->amount, 0) }}</td>
-                    </tr>
-                    @empty
-                    {{-- fallback: single order with no sub-orders --}}
-                    <tr>
-                        <td class="sno">1</td>
-                        <td style="font-weight:600;">{{ $order->member->full_name }}</td>
-                        <td style="font-family:monospace;font-size:12px;">
-                            {{ $order->member->aadhar_no ?? '—' }}
-                        </td>
-                        <td>{{ $order->member->contact ?? '—' }}</td>
-                        <td>
-                            <span style="font-weight:600;color:#1a56b0;">
-                                {{ $order->member->sponsor_id ?? '—' }}
-                            </span>
-                        </td>
-                        <td>
-                            @if($order->member->position === 'left')
-                                <span class="leg-badge-left">◀ Left</span>
-                            @elseif($order->member->position === 'right')
-                                <span class="leg-badge-right">▶ Right</span>
-                            @else
-                                <span style="color:#aaa;">—</span>
-                            @endif
-                        </td>
-                        <td>₹{{ number_format($order->order_value, 0) }}</td>
-                    </tr>
-                    @endforelse
-                </tbody>
+              <tbody>
+    @forelse($order->subOrders as $i => $sub)
+    <tr>
+        <td class="sno">{{ $i + 1 }}</td>
+        <td style="font-weight:600;">{{ $sub->name }}</td>
+        <td style="font-family:monospace;font-size:12px;">{{ $sub->aadhar ?? '—' }}</td>
+        <td>{{ $sub->mobile ?? '—' }}</td>
+        <td>
+            <span style="font-weight:600;color:#1a56b0;">{{ $sub->sponsor_id ?? '—' }}</span>
+        </td>
+        <td>
+            @if($sub->leg === 'left')
+                <span class="leg-badge-left">◀ Left</span>
+            @elseif($sub->leg === 'right')
+                <span class="leg-badge-right">▶ Right</span>
+            @else
+                <span style="color:#aaa;">—</span>
+            @endif
+        </td>
+        <td>₹{{ number_format($sub->amount, 0) }}</td>
+    </tr>
+    @empty
+    <tr>
+        <td colspan="7" style="text-align:center;padding:30px;color:#888;">No line items found</td>
+    </tr>
+    @endforelse
+</tbody>
                 <tfoot>
                     <tr class="od-grand-row">
                         <td colspan="6" class="od-grand-label">Grand Total:</td>
-                        <td class="od-grand-val">₹{{ number_format($order->order_value, 0) }}</td>
+                        <td class="od-grand-val">₹{{ number_format($order->subOrders->sum('amount'), 0) }}</td>
                     </tr>
                 </tfoot>
             </table>

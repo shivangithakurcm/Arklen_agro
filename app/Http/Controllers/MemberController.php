@@ -44,6 +44,7 @@ class MemberController extends Controller
         'contact'         => 'required|digits:10',
         'address'         => 'required|string',
         'aadhar_no'       => 'nullable|digits:12',
+        'city'             => 'nullable',
         'date_of_joining' => 'required|date',
         'sponsor_id'      => 'nullable|string',
         'sponsor_leg'     => 'nullable|in:left,right',
@@ -75,11 +76,13 @@ class MemberController extends Controller
 
     $member = Member::create($data);
 
-    \App\Models\User::create([
-        'name'      => $request->first_name . ' ' . $request->last_name,
-        'seller_id' => $data['seller_id'],
-        'password'  => Hash::make($request->password),
-    ]);
+    \App\Models\User::updateOrCreate(
+    ['seller_id' => $data['seller_id']],          // search condition
+    [
+        'name'     => $request->first_name . ' ' . $request->last_name,
+        'password' => Hash::make($request->password),
+    ]
+);
 
     // ✅ Order automatically create karo
     $product = Product::find($member->product_id);
@@ -89,7 +92,7 @@ class MemberController extends Controller
             'member_id'      => $member->id,
             'product_id'     => $member->product_id,
             'order_date'     => $member->date_of_joining,
-            'city'           => $member->address,
+            'city'           => $member->city,
             'order_product'  => $product->product_name,
             'order_quantity' => 1,
             'order_value'    => $product->product_price,

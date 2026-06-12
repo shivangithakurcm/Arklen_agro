@@ -20,7 +20,7 @@ class Member extends Authenticatable
         'team_income', 'pay_income', 'total_income', 'balance',
         'team_bv', 'is_active', 'parent_id', 'product_id',
         'direct_commission', 'level1_commission', 'level2_commission',
-        'new_joinee_income',
+        'new_joinee_income', 'city',  
     ];
 
     protected $hidden = ['password', 'remember_token'];

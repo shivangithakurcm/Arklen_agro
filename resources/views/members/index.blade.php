@@ -82,10 +82,14 @@
                 <tr>
                     <th>S.No</th>
                     <th>Profile</th>
-                    <th>Full Name</th>
+                    <th>Name</th>
                     <th>Contact</th>
-                    <th>City</th>
                     <th>Seller ID</th>
+                    <th>Sponsor ID</th>
+                    <th>Position</th>
+                    <th>Left</th>
+                    <th>Right</th>
+                    <th>Total Commission</th>
                     <th>Total Income</th>
                     <th>Joining Date</th>
                     <th>Action</th>
@@ -105,8 +109,28 @@
                     </td>
                     <td>{{ $m->full_name }}</td>
                     <td>{{ $m->contact }}</td>
-                    <td>{{ $m->city ?? '-' }}</td>
                     <td><span class="badge badge-green">{{ $m->seller_id }}</span></td>
+                    <td>
+                        @if($m->sponsor_id)
+                            <span style="font-size:13px;font-weight:600;color:#1e2a14;">{{ $m->sponsor_id }}</span>
+                        @else
+                            <span style="color:#aaa;">-</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($m->sponsor_leg)
+                            <span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;
+                                background:{{ $m->sponsor_leg == 'left' ? '#e8f0fe' : '#fff3e0' }};
+                                color:{{ $m->sponsor_leg == 'left' ? '#1a56b0' : '#b45309' }};">
+                                {{ ucfirst($m->sponsor_leg) }}
+                            </span>
+                        @else
+                            <span style="color:#aaa;">-</span>
+                        @endif
+                    </td>
+                    <td>{{ number_format($m->left_bv, 0) }}</td>
+                    <td>{{ number_format($m->right_bv, 0) }}</td>
+                    <td>₹{{ number_format($m->direct_commission + $m->new_joinee_bonus + $m->level1_commission + $m->level2_commission, 2) }}</td>
                     <td>₹{{ number_format($m->total_income, 2) }}</td>
                     <td>{{ $m->date_of_joining->format('d M Y') }}</td>
                     <td onclick="event.stopPropagation();">
@@ -115,7 +139,7 @@
                                 <i class="fas fa-pen"></i>
                             </a>
                             <a href="{{ route('members.show', $m) }}" class="action-btn action-btn-view" title="Profile">
-                                <i class="fas fa-id-card"></i> Profile
+                                <i class="fas fa-id-card"></i> Seller Profile
                             </a>
                             <a href="{{ route('members.action', $m) }}" class="action-btn action-btn-action" title="Action">
                                 <i class="fas fa-sliders-h"></i>
@@ -125,7 +149,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align:center;padding:30px;color:#888;">No members found</td>
+                    <td colspan="13" style="text-align:center;padding:30px;color:#888;">No members found</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -195,7 +219,7 @@
                     <input type="text" name="city" value="{{ old('city') }}" class="form-control" placeholder="e.g. Durg">
                 </div>
 
-                {{-- Seller ID — auto-generated, regenerate button inside input --}}
+                {{-- Seller ID --}}
                 <div>
                     <label class="form-label">Seller ID <span style="font-weight:400;color:#bbb;font-size:10px;">auto-generated</span></label>
                     <div class="sid-wrap">
@@ -209,6 +233,20 @@
                             <i class="fas fa-rotate"></i> New
                         </button>
                     </div>
+                </div>
+
+                {{-- Sponsor ID --}}
+                <div>
+                    <label class="form-label">Sponsor ID</label>
+                    <select name="sponsor_id" id="sponsor_select" class="form-control" style="width:100%;">
+                        <option value="">---- Select Sponsor ----</option>
+                        @foreach(\App\Models\Member::orderBy('first_name')->get() as $sponsor)
+                            <option value="{{ $sponsor->seller_id }}"
+                                {{ old('sponsor_id') == $sponsor->seller_id ? 'selected' : '' }}>
+                                {{ $sponsor->full_name }} ({{ $sponsor->seller_id }})
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div>
@@ -269,19 +307,16 @@
                     <span class="earn-lock" id="bvLockIcon"><i class="fas fa-lock"></i></span>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;">
-
                     <div>
                         <label class="form-label">Left BV</label>
                         <input type="number" name="left_bv" value="{{ old('left_bv', 0) }}"
                             min="0" step="0.01" class="form-control earn-field" disabled>
                     </div>
-
                     <div>
                         <label class="form-label">Right BV</label>
                         <input type="number" name="right_bv" value="{{ old('right_bv', 0) }}"
                             min="0" step="0.01" class="form-field earn-field form-control" disabled>
                     </div>
-
                 </div>
 
                 {{-- Commission Section --}}
@@ -290,31 +325,26 @@
                     <span class="earn-lock" id="commLockIcon"><i class="fas fa-lock"></i></span>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-
                     <div>
                         <label class="form-label">Direct Commission</label>
                         <input type="number" name="direct_commission" value="{{ old('direct_commission', 0) }}"
                             min="0" step="0.01" class="form-control earn-field" disabled>
                     </div>
-
                     <div>
                         <label class="form-label">New Joinee Bonus</label>
                         <input type="number" name="new_joinee_bonus" value="{{ old('new_joinee_bonus', 0) }}"
                             min="0" step="0.01" class="form-control earn-field" disabled>
                     </div>
-
                     <div>
                         <label class="form-label">Level 1 Commission</label>
                         <input type="number" name="level1_commission" value="{{ old('level1_commission', 0) }}"
                             min="0" step="0.01" class="form-control earn-field" disabled>
                     </div>
-
                     <div>
                         <label class="form-label">Level 2 Commission</label>
                         <input type="number" name="level2_commission" value="{{ old('level2_commission', 0) }}"
                             min="0" step="0.01" class="form-control earn-field" disabled>
                     </div>
-
                 </div>
             </div>{{-- /earnings section --}}
 
@@ -366,28 +396,14 @@ function previewImage(input) {
     }
 }
 
-/* ── Seller ID optional edit ── */
-function toggleSellerIdEdit(btn) {
-    const field = document.getElementById('sellerIdField');
-    const isLocked = field.readOnly;
-    if (isLocked) {
-        field.readOnly = false;
-        field.style.background = '#fff';
-        field.style.color = '#1e2a14';
-        field.focus();
-        btn.innerHTML = '<i class="fas fa-lock" style="margin-right:4px;"></i> Lock';
-        btn.style.background = '#fff3e0';
-        btn.style.borderColor = '#fcd59a';
-        btn.style.color = '#b45309';
-    } else {
-        field.readOnly = true;
-        field.style.background = '#f5f5f5';
-        field.style.color = '#555';
-        btn.innerHTML = '<i class="fas fa-pen" style="margin-right:4px;"></i> Edit';
-        btn.style.background = '#EAF3DE';
-        btn.style.borderColor = '#c0dd97';
-        btn.style.color = 'var(--green-800)';
+/* ── Seller ID regen ── */
+function regenSellerId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = 'SL';
+    for (let i = 0; i < 4; i++) {
+        id += Math.floor(Math.random() * 10);
     }
+    document.getElementById('sellerIdField').value = id;
 }
 
 /* ── Manual earning toggle ── */
@@ -419,7 +435,6 @@ function toggleEarningFields(checkbox) {
 /* ── Re-open modal on validation error ── */
 @if($errors->any())
     document.getElementById('addModal').style.display = 'flex';
-    // If earnings fields had values, re-enable them
     const hasEarnings = {{ (old('left_bv') || old('right_bv') || old('direct_commission') || old('new_joinee_bonus') || old('level1_commission') || old('level2_commission')) ? 'true' : 'false' }};
     if (hasEarnings) {
         const cb = document.getElementById('addEarningManually');

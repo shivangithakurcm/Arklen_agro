@@ -4,82 +4,106 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Member;
 use App\Models\Product;
+use App\Models\SubOrder;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Order::with(['member', 'product']);
+   public function index(Request $request)
+{
+    $query = Order::with(['member', 'subOrders']);
 
-        if ($request->search) {
-            $query->whereHas('member', function($q) use ($request) {
-                $q->where('first_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('last_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('seller_id', 'like', '%'.$request->search.'%');
-            })->orWhere('order_no', 'like', '%'.$request->search.'%');
-        }
-
-        if ($request->date_from) {
-            $query->whereDate('order_date', '>=', $request->date_from);
-        }
-        if ($request->date_to) {
-            $query->whereDate('order_date', '<=', $request->date_to);
-        }
-        if ($request->city) {
-            $query->where('city', 'like', '%'.$request->city.'%');
-        }
-
-        $orders   = $query->latest()->paginate(15);
-        $members  = Member::select('id','first_name','last_name','seller_id')->get();
-        $products = Product::orderBy('product_name')->get();
-
-        return view('orders.index', compact('orders', 'members', 'products'));
+    if ($request->search) {
+        $query->where('order_no', 'like', '%'.$request->search.'%')
+              ->orWhereHas('member', function($q) use ($request) {
+                  $q->where('first_name', 'like', '%'.$request->search.'%')
+                    ->orWhere('last_name',  'like', '%'.$request->search.'%')
+                    ->orWhere('seller_id',  'like', '%'.$request->search.'%');
+              });
     }
 
+    if ($request->date_from) {
+        $query->whereDate('order_date', '>=', $request->date_from);
+    }
+    if ($request->date_to) {
+        $query->whereDate('order_date', '<=', $request->date_to);
+    }
+
+    $orders   = $query->latest()->get();
+    $members  = Member::select('id','first_name','last_name','seller_id')->get();
+    $products = Product::orderBy('product_name')->get();
+
+    return view('orders.index', compact('orders', 'members', 'products'));
+}
     public function create()
-{
-    $members  = Member::orderBy('first_name')->get();
-    $products = Product::all();
-    return view('orders.create', compact('members', 'products'));
-}
-public function invoice(Order $order)
-{
-    return view('orders.invoice', compact('order'));
-}
-public function show(Order $order)
-{
-    $order->load(['member', 'product', 'subOrders']);
-
-    return view('orders.order_show', compact('order'));
-}
- public function store(Request $request)
-{
-    $product = Product::first(); // ← sirf ek product hai, directly lo
-    $qty     = $request->order_quantity ?? 1;
-
-    $order = Order::create([
-        'order_no'       => 'ORD-' . strtoupper(uniqid()),
-        'member_id'      => $request->member_id,
-        'product_id'     => $product->id,  // ← hardcode
-        'order_quantity' => $qty,
-        'order_date'     => $request->order_date,
-        'order_value'    => $product->product_price,
-        'order_product'  => $product->product_name,
-        'total_value'    => $product->product_price * $qty,
-        'total_bv'       => round(($product->business_value / 100) * $product->product_price * $qty, 2),
-        'city'           => $request->city,
-        'status'         => 'pending',
-    ]);
-
-    $member = Member::find($order->member_id);
-    if ($member) {
-        $member->distributeCommission($product, $qty);
+    {
+        $members  = Member::orderBy('first_name')->get();
+        $products = Product::all();
+        return view('orders.create', compact('members', 'products'));
     }
 
-    return redirect()->route('orders.index')->with('success', 'Order created successfully!');
-}
+    public function store(Request $request)
+    {
+        $product = Product::first();
+        $rows    = array_filter($request->rows ?? [], fn($r) => !empty($r['name']));
 
+        if (empty($rows)) {
+            return back()->withErrors(['rows' => 'Kam se kam ek row bharein.'])->withInput();
+        }
+
+        $grandTotal = collect($rows)->sum(fn($r) => floatval($r['amount'] ?? 0));
+        $qty        = count($rows);
+
+        // Auth member dhundo — members table se
+     $member = Member::where('seller_id', $request->member_seller_id)->first();
+if (!$member) {
+    return back()->withErrors(['member_seller_id' => 'Seller ID not found.'])->withInput();
+}
+$memberId = $member->id;
+
+        $order = Order::create([
+            'order_no'       => Order::generateOrderNo(),
+            'member_id'      => $memberId,
+            'product_id'     => $product->id,
+            'order_quantity' => $qty,
+            'order_date'     => $request->order_date,
+            'order_value'    => $grandTotal,
+            'order_product'  => $product->product_name,
+            'total_value'    => $grandTotal,
+            'total_bv'       => round(($product->business_value / 100) * $grandTotal, 2),
+            'status'         => 'pending',
+        ]);
+
+        foreach ($rows as $row) {
+            SubOrder::create([
+                'order_id'   => $order->id,
+                'name'       => $row['name'],
+                'aadhar'     => $row['aadhar']   ?? null,
+                'mobile'     => $row['mobile']   ?? null,
+              'sponsor_id' => !empty($row['sponsor_id']) ? strtoupper($row['sponsor_id']) : null,
+                'leg'        => $row['leg']      ?? 'left',
+                'amount'     => floatval($row['amount'] ?? 0),
+            ]);
+        }
+
+        $member = Member::find($order->member_id);
+        if ($member) {
+            $member->distributeCommission($product, $qty);
+        }
+
+        return redirect()->route('orders.index')->with('success', 'Order successfully created!');
+    }
+
+    public function show(Order $order)
+    {
+        $order->load(['member', 'product', 'subOrders']);
+        return view('orders.order_show', compact('order'));
+    }
+
+    public function invoice(Order $order)
+    {
+        return view('orders.invoice', compact('order'));
+    }
 
     public function edit(Order $order)
     {
@@ -88,49 +112,45 @@ public function show(Order $order)
         return view('orders.edit', compact('order', 'members', 'products'));
     }
 
-   public function update(Request $request, Order $order)
-{
-    // 1. Pehle purana product aur qty lo
-    $oldProduct = Product::find($order->product_id);
-    $oldQty     = $order->order_quantity;
-    $oldMember  = Member::find($order->member_id);
+    public function update(Request $request, Order $order)
+    {
+        $oldProduct = Product::find($order->product_id);
+        $oldQty     = $order->order_quantity;
+        $oldMember  = Member::find($order->member_id);
 
-    // 2. Purana commission reverse karo
-    if ($oldMember && $oldProduct) {
-        $oldMember->reverseCommission($oldProduct, $oldQty);
+        if ($oldMember && $oldProduct) {
+            $oldMember->reverseCommission($oldProduct, $oldQty);
+        }
+
+        $product = Product::find($request->product_id);
+        $qty     = $request->order_quantity ?? 1;
+
+        $order->update([
+            'member_id'      => $request->member_id,
+            'product_id'     => $request->product_id,
+            'order_quantity' => $qty,
+            'order_date'     => $request->order_date,
+            'order_value'    => $product->product_price * $qty,
+            'order_product'  => $product->product_name,
+            'total_value'    => $product->product_price * $qty,
+            'total_bv'       => round(($product->business_value / 100) * $product->product_price * $qty, 2),
+            'status'         => $request->status,
+        ]);
+
+        $newMember = Member::find($request->member_id);
+        if ($newMember) {
+            $newMember->distributeCommission($product, $qty);
+        }
+
+        return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
     }
 
-    // 3. Order update karo
-    $product = Product::find($request->product_id);
-    $qty     = $request->order_quantity ?? 1;
-
-    $order->update([
-        'member_id'      => $request->member_id,
-        'product_id'     => $request->product_id,
-        'order_quantity' => $qty,
-        'order_date'     => $request->order_date,
-        'order_value'    => $product->product_price,
-        'order_product'  => $product->product_name,
-        'total_value'    => $product->product_price * $qty,
-        'total_bv'       => round(($product->business_value / 100) * $product->product_price * $qty, 2),
-        'city'           => $request->city,
-        'status'         => $request->status,
-    ]);
-
-    // 4. Naya commission distribute karo
-    $newMember = Member::find($request->member_id);
-    if ($newMember) {
-        $newMember->distributeCommission($product, $qty);
+    public function action(Order $order)
+    {
+        $order->load('subOrders');
+        $member = $order->member;
+        return view('orders.action', compact('order', 'member'));
     }
-
-    return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
-}
-  public function action(Order $order)
-{
-    $member = $order->member;
-
-    return view('orders.action', compact('order', 'member'));
-}
 
     public function actionUpdate(Request $request, Order $order)
     {

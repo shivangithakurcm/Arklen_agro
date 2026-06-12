@@ -7,18 +7,17 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardController;
 
-// ── Auth ────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
-// ── Protected ───────────────────────────────────────────
+// ── Protected ──────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // ── Members ─────────────────────────────────────────
+    // ── Members ────────────────────────────────────────
     Route::get('/members',                      [MemberController::class, 'index'])->name('members.index');
     Route::post('/members',                     [MemberController::class, 'store'])->name('members.store');
     Route::get('/members/{member}',             [MemberController::class, 'show'])->name('members.show');
@@ -29,32 +28,26 @@ Route::middleware('auth')->group(function () {
     Route::put('/members/{member}/override',    [MemberController::class, 'adminOverride'])->name('members.admin-override');
     Route::get('/members/{member}/recalculate', [MemberController::class, 'recalculate'])->name('members.recalculate');
 
-    // ── Products ─────────────────────────────────────────
+    // ── Products ───────────────────────────────────────
     Route::get('/products',                [ProductController::class, 'index'])->name('products.index');
     Route::post('/products',               [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{product}',      [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}',   [ProductController::class, 'destroy'])->name('products.destroy');
 
-    // ── Tree ─────────────────────────────────────────────
+    // ── Tree ──────────────────────────────────────────
     Route::get('/tree', [MemberController::class, 'tree'])->name('tree');
-    Route::patch('orders/{order}/toggle', [OrderController::class, 'toggle'])->name('orders.toggle');
 
-    Route::get('orders/create',        [OrderController::class, 'create'])->name('orders.create');
-
-
-    // ── Orders ───────────────────────────────────────────
-    Route::get('/orders',                [OrderController::class, 'index'])->name('orders.index');
-    Route::post('/orders',               [OrderController::class, 'store'])->name('orders.store');
-    Route::get('/orders/{order}/edit',   [OrderController::class, 'edit'])->name('orders.edit');
-    Route::put('/orders/{order}',        [OrderController::class, 'update'])->name('orders.update');
-    Route::get('/orders/{order}/action', [OrderController::class, 'action'])->name('orders.action');
-    Route::put('/orders/{order}/action', [OrderController::class, 'actionUpdate'])->name('orders.action.update');
-    Route::resource('orders', OrderController::class)->except(['create']);
-    Route::get('/orders/{order}', [OrderController::class, 'show'])
-    ->name('orders.show');
-
-    Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])
-    ->name('orders.invoice');
+    // ── Orders ────────────────────────────────────────
+    Route::get('orders/create',             [OrderController::class, 'create'])->name('orders.create');
+    Route::get('/orders',                   [OrderController::class, 'index'])->name('orders.index');
+    Route::post('/orders',                  [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/{order}',           [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/edit',      [OrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/orders/{order}',           [OrderController::class, 'update'])->name('orders.update');
+    Route::get('/orders/{order}/action',    [OrderController::class, 'action'])->name('orders.action');
+    Route::put('/orders/{order}/action',    [OrderController::class, 'actionUpdate'])->name('orders.action.update');
+    Route::patch('orders/{order}/toggle',   [OrderController::class, 'toggle'])->name('orders.toggle');
+    Route::get('/orders/{order}/invoice',   [OrderController::class, 'invoice'])->name('orders.invoice');
 
 });
