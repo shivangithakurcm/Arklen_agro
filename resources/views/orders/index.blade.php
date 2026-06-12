@@ -58,7 +58,7 @@
                     <th>S.No</th>
                     <th>Order No</th>
                     <th>Punch By</th>
-                    <th>Qty</th>
+                   <!-- <th>Qty</th>-->
                     <th>Total Price</th>
                     <th>Date</th>
                     <th>Status</th>
@@ -82,7 +82,7 @@
                         <div style="font-weight:600;font-size:13px;">{{ $order->member->full_name }}</div>
                         <div style="font-size:11px;color:#888;">{{ $order->member->seller_id }}</div>
                     </td>
-                    <td>{{ $order->subOrders->count() }}</td>
+                   <!-- <td>{{ $order->subOrders->count() }}</td>-->
                     <td>
                         <span style="font-weight:700;color:#3a6110;">
                             ₹{{ number_format($order->subOrders->sum('amount'), 2) }}
@@ -112,7 +112,7 @@
 
                 {{-- SubOrder rows (hidden by default) --}}
                 <tr id="sub-{{ $order->id }}" style="display:none;">
-                    <td colspan="9" style="padding:0;">
+                    <td colspan="8" style="padding:0;">
                         <table style="width:100%;border-collapse:collapse;background:#f8fdf4;">
                             <thead>
                                 <tr style="background:#eef7e4;">
@@ -158,7 +158,7 @@
 
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align:center;padding:30px;color:#888;">No orders found</td>
+                    <td colspan="8" style="text-align:center;padding:30px;color:#888;">No orders found</td>
                 </tr>
                 @endforelse
             </tbody>

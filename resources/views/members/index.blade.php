@@ -118,19 +118,19 @@
                         @endif
                     </td>
                     <td>
-                        @if($m->sponsor_leg)
-                            <span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;
-                                background:{{ $m->sponsor_leg == 'left' ? '#e8f0fe' : '#fff3e0' }};
-                                color:{{ $m->sponsor_leg == 'left' ? '#1a56b0' : '#b45309' }};">
-                                {{ ucfirst($m->sponsor_leg) }}
-                            </span>
-                        @else
-                            <span style="color:#aaa;">-</span>
-                        @endif
+                      @if($m->position)
+    <span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;
+        background:{{ $m->position == 'left' ? '#e8f0fe' : '#fff3e0' }};
+        color:{{ $m->position == 'left' ? '#1a56b0' : '#b45309' }};">
+        {{ ucfirst($m->position) }}
+    </span>
+@else
+    <span style="color:#aaa;">-</span>
+@endif
                     </td>
-                    <td>{{ number_format($m->left_bv, 0) }}</td>
-                    <td>{{ number_format($m->right_bv, 0) }}</td>
-                    <td>₹{{ number_format($m->direct_commission + $m->new_joinee_bonus + $m->level1_commission + $m->level2_commission, 2) }}</td>
+                 <td>{{ number_format($m->bv_left, 0) }}</td>
+<td>{{ number_format($m->bv_right, 0) }}</td>
+<td>₹{{ number_format($m->direct_commission + $m->new_joinee_income + $m->level1_commission + $m->level2_commission, 2) }}</td>
                     <td>₹{{ number_format($m->total_income, 2) }}</td>
                     <td>{{ $m->date_of_joining->format('d M Y') }}</td>
                     <td onclick="event.stopPropagation();">

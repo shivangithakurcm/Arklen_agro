@@ -54,5 +54,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Orders Action Routes
     Route::get('/orders/{order}/action',  [OrderApiController::class, 'action']);
 Route::put('/orders/{order}/action',  [OrderApiController::class, 'actionUpdate']);
-
+Route::get('/member-name', function(\Illuminate\Http\Request $request) {
+    $member = \App\Models\Member::where('seller_id', strtoupper($request->seller_id))
+                                ->first(['first_name', 'last_name']);
+    return response()->json([
+        'name' => $member ? $member->first_name . ' ' . $member->last_name : null
+    ]);
+});
 });

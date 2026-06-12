@@ -53,14 +53,13 @@ class Member extends Authenticatable
     $price = ($product->product_price ?? 0) * $qty;
     $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
 
-    $directParent = Member::where('seller_id', $this->parent_id)->first();
-    $level1Parent = $directParent
-                    ? Member::where('seller_id', $directParent->parent_id)->first()
-                    : null;
-    $level2Parent = $level1Parent
-                    ? Member::where('seller_id', $level1Parent->parent_id)->first()
-                    : null;
-
+  $directParent = Member::where('seller_id', $this->sponsor_id)->first();
+$level1Parent = $directParent
+                ? Member::where('seller_id', $directParent->sponsor_id)->first()
+                : null;
+$level2Parent = $level1Parent
+                ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
+                : null;
     // ← Pehla order check (reverse mein bhi same check)
     $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() <= 1;
 
@@ -134,14 +133,14 @@ class Member extends Authenticatable
     $price = ($product->product_price ?? 0) * $qty;
     $pct   = fn($field) => round(($product->{$field} ?? 0) / 100 * $price, 2);
 
-    $directParent = Member::where('seller_id', $this->parent_id)->first();
-    $level1Parent = $directParent
-                    ? Member::where('seller_id', $directParent->parent_id)->first()
-                    : null;
-    $level2Parent = $level1Parent
-                    ? Member::where('seller_id', $level1Parent->parent_id)->first()
-                    : null;
-
+  // parent_id → sponsor_id
+$directParent = Member::where('seller_id', $this->sponsor_id)->first();
+$level1Parent = $directParent
+                ? Member::where('seller_id', $directParent->sponsor_id)->first()
+                : null;
+$level2Parent = $level1Parent
+                ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
+                : null;
     // ← Pehla order check
     $isFirstOrder = \App\Models\Order::where('member_id', $this->id)->count() === 1;
 
