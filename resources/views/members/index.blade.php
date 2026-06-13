@@ -54,7 +54,9 @@
 .sid-regen-btn:hover{background:#d4eab8;}
 </style>
 
-<div class="card card-pad">
+<div class="content">
+
+    <div class="search-card">
 
     {{-- Header --}}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -75,9 +77,10 @@
             <a href="{{ route('members.index') }}" class="btn btn-secondary">Clear</a>
         @endif
     </form>
-
-    <div class="table-wrap">
-        <table>
+</div>
+    <div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
             <thead>
                 <tr>
                     <th>S.No</th>
@@ -102,9 +105,9 @@
                     <td>
                         @if($m->profile_image)
                             <img src="{{ Storage::url($m->profile_image) }}"
-                                style="width:35px;height:35px;border-radius:50%;object-fit:cover;">
+     class="profile-img">
                         @else
-                            <div class="avatar">{{ $m->initials }}</div>
+                            <div class="profile-circle">{{ $m->initials }}</div>
                         @endif
                     </td>
                     <td>{{ $m->full_name }}</td>
@@ -119,9 +122,7 @@
                     </td>
                     <td>
                         @if($m->sponsor_leg)
-                            <span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;
-                                background:{{ $m->sponsor_leg == 'left' ? '#e8f0fe' : '#fff3e0' }};
-                                color:{{ $m->sponsor_leg == 'left' ? '#1a56b0' : '#b45309' }};">
+                            <span class="position-badge {{ $m->sponsor_leg == 'left' ? 'left-badge' : 'right-badge' }}">
                                 {{ ucfirst($m->sponsor_leg) }}
                             </span>
                         @else
@@ -154,6 +155,7 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
     </div>
 
     {{-- Pagination --}}

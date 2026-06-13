@@ -17,6 +17,18 @@
 .action-btn-edit:hover{ background:#d4eab8; }
 .action-btn-delete{ background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
 .action-btn-delete:hover{ background:#fecaca; }
+
+.card.card-pad{
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+    padding:20px;
+}
+.card.card-pad{
+    height: calc(100vh - 120px);
+    display:flex;
+    flex-direction:column;
+}
 </style>
 
 <div class="card card-pad">
@@ -28,45 +40,39 @@
             <i class="fas fa-plus"></i> Add Product
         </button>
     </div>
-
+ <div class="page-wrapper">
     {{-- Table --}}
-    <div style="overflow-x:auto;">
+    <div class="table-card">
+        
         <table>
             <thead>
                 <tr>
-                    <th>S.No</th>
-                    <th>Image</th>
-                    <th>Product Name</th>
+                    <th>S.No.</th>
+
+                    <th>Product</th>
                     <th>Price</th>
-                    <th>Business Value</th>
-                    <th>Direct Commission</th>
+                    <th>Direct Comm.</th>
                     <th>New Joinee</th>
                     <th>Level 1</th>
                     <th>Level 2</th>
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($products as $i => $p)
+
+            <tbody id="productTableBody">
+                 @forelse($products as $i => $p)
                 <tr>
-                    <td>{{ $products->firstItem() + $i }}</td>
-                    <td>
-                        @if($p->product_image)
-                        <img src="{{ Storage::url($p->product_image) }}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
-                        @else
-                        <div style="width:40px;height:40px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;">
-                            <i class="fas fa-image" style="color:#aaa;"></i>
-                        </div>
-                        @endif
-                    </td>
+                
+                      <td>{{ $products->firstItem() + $i }}</td>
+                   
                     <td>{{ $p->product_name }}</td>
                     <td>₹{{ number_format($p->product_price, 2) }}</td>
-                    <td>{{ $p->business_value }}</td>
                     <td>{{ $p->direct_commission }}%</td>
                     <td>{{ $p->new_joinee }}%</td>
                     <td>{{ $p->level_1 }}%</td>
                     <td>{{ $p->level_2 }}%</td>
-                    <td>
+
+                     <td>
                         <div class="action-btns">
                             <a href="{{ route('products.edit', $p) }}" class="action-btn action-btn-edit">
                                 <i class="fas fa-pen"></i>
@@ -86,13 +92,13 @@
             </tbody>
         </table>
     </div>
-
+</div>
     <div style="margin-top:15px;">{{ $products->links() }}</div>
 </div>
 
 {{-- ADD PRODUCT MODAL --}}
-<div id="addModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:999;">
-    <div style="background:#fff;width:450px;max-width:95vw;border-radius:16px;overflow-y:auto;max-height:92vh;">
+<div id="addModal" style="display:none;backdrop-filter:blur(4px);position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:999;">
+    <div style="background:#fff;width:700px;max-width:95vw;border-radius:16px;overflow-y:auto;max-height:92vh;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #eee;">
             <div>
                 <h3 style="margin:0;color:var(--green-800);">Product Detail</h3>

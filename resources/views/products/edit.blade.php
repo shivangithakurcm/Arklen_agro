@@ -10,7 +10,8 @@
     </a>
 </div>
 
-<div class="card card-pad" style="max-width:450px;">
+<!-- Width ko 450px se badha kar 600px kiya -->
+<div class="card card-pad" style="max-width:600px; width:100%; margin:0 auto;">
     <h3 style="margin:0 0 20px;color:var(--green-800);">Edit Product</h3>
 
     <form method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data">
@@ -30,34 +31,35 @@
             </label>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:15px;">
-            <div>
+        <!-- Inputs ko 2 columns grid mein set kiya taaki bdi width achhi dikhe -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:15px;">
+            <div style="grid-column: span 2;">
                 <label class="form-label">Product Name *</label>
-                <input type="text" name="product_name" value="{{ $product->product_name }}" required class="form-control">
+                <input type="text" name="product_name" value="{{ $product->product_name }}" required class="form-control" style="width:100%;">
             </div>
             <div>
                 <label class="form-label">Product Price (₹) *</label>
-                <input type="number" name="product_price" value="{{ $product->product_price }}" required min="0" step="0.01" class="form-control">
+                <input type="number" name="product_price" value="{{ $product->product_price }}" required min="0" step="0.01" class="form-control" style="width:100%;">
             </div>
-            <div>
+            <!-- <div>
                 <label class="form-label">Business Value *</label>
-                <input type="number" name="business_value" value="{{ $product->business_value }}" required min="0" step="0.01" class="form-control">
-            </div>
+                <input type="number" name="business_value" value="{{ $product->business_value }}" required min="0" step="0.01" class="form-control" style="width:100%;">
+            </div> -->
             <div>
                 <label class="form-label">Direct Commission (%) *</label>
-                <input type="number" name="direct_commission" value="{{ $product->direct_commission }}" required min="0" max="100" step="0.01" class="form-control">
+                <input type="number" name="direct_commission" value="{{ $product->direct_commission }}" required min="0" max="100" step="0.01" class="form-control" style="width:100%;">
             </div>
             <div>
                 <label class="form-label">New Joinee (%) *</label>
-                <input type="number" name="new_joinee" value="{{ $product->new_joinee }}" required min="0" max="100" step="0.01" class="form-control">
+                <input type="number" name="new_joinee" value="{{ $product->new_joinee }}" required min="0" max="100" step="0.01" class="form-control" style="width:100%;">
             </div>
             <div>
                 <label class="form-label">Level 1 (%) *</label>
-                <input type="number" name="level_1" value="{{ $product->level_1 }}" required min="0" max="100" step="0.01" class="form-control">
+                <input type="number" name="level_1" value="{{ $product->level_1 }}" required min="0" max="100" step="0.01" class="form-control" style="width:100%;">
             </div>
             <div>
                 <label class="form-label">Level 2 (%) *</label>
-                <input type="number" name="level_2" value="{{ $product->level_2 }}" required min="0" max="100" step="0.01" class="form-control">
+                <input type="number" name="level_2" value="{{ $product->level_2 }}" required min="0" max="100" step="0.01" class="form-control" style="width:100%;">
             </div>
         </div>
 

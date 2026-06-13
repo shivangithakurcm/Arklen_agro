@@ -5,127 +5,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Arklen Agro')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/member.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        :root {
-            --green-50:  #f2f9eb;
-            --green-100: #e4f3d6;
-            --green-200: #c9e7ad;
-            --green-300: #aad880;
-            --green-400: #8cc954;
-            --green-500: #6db82a;
-            --green-600: #569321;
-            --green-700: #416f19;
-            --green-800: #2d4d11;
-            --green-900: #1a2e0a;
-            --amber-400: #f59e0b;
-            --amber-100: #fef3c7;
-            --sidebar-w: 260px;
-            --topbar-h: 64px;
-            --bg:        #f5f7f2;
-            --surface:   #ffffff;
-            --border:    #e2e8d9;
-            --text:      #1e2a14;
-            --text-muted:#6b7c5a;
-            --radius:    12px;
-            --shadow:    0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
-        }
+:root {
+    --green-50:  #f2f9eb;
+    --green-100: #e4f3d6;
+    --green-500: #4f9d69; /* SS ka main green color */
+    --green-600: #418457;
+    --green-700: #346a46;
+    --green-900: #ffffff; /* Sidebar background ko white kiya */
+    --sidebar-w: 240px;
+    --topbar-h: 70px;
+    --bg:        #f8faf9; /* Soft background */
+    --surface:   #ffffff;
+    --border:    #edf2f7; /* Light border */
+    --text:      #334155; /* Dark grey text */
+    --text-muted:#64748b;
+    --radius:    12px;
+    --shadow:    0 4px 6px -1px rgba(0,0,0,.05);
+}
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
-        a { text-decoration: none; color: inherit; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+a { text-decoration: none; color: inherit; }
 
-        .layout { display: flex; min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; }
 
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--green-900);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 200;
-            transition: transform .25s ease;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--green-700) transparent;
-        }
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: var(--green-700); border-radius: 4px; }
+/* Clean & Light Sidebar (As per SS) */
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg, #ffffff);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 200;
+    transition: transform .25s ease;
+    height:calc(100vh - 20px);
+}
 
-        .sidebar-logo {
-            display: flex; align-items: center; gap: 12px;
-            padding: 22px 20px 18px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-        .sidebar-logo-icon {
-            width: 38px; height: 38px;
-            background: var(--green-500);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; color: #fff; flex-shrink: 0;
-        }
-        .sidebar-logo-text { display: flex; flex-direction: column; }
-        .sidebar-logo-text strong { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
-        .sidebar-logo-text span { font-size: 10px; color: var(--green-400); font-weight: 500; letter-spacing: .5px; text-transform: uppercase; }
+.sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 30px 24px;
+}
+.sidebar-logo strong { font-size: 20px; font-weight: 700; color: var(--green-500); letter-spacing: -.3px; }
+.sidebar-logo span { display: none; } /* Extra text hata diya jaisa SS me hai */
 
-        .sidebar-nav { padding: 16px 12px; flex: 1; }
+.sidebar-nav { padding: 10px 16px; flex: 1; }
 
-        .nav-section-label {
-            font-size: 10px; font-weight: 700; letter-spacing: 1px;
-            text-transform: uppercase; color: var(--green-600);
-            padding: 12px 8px 6px;
-        }
+.nav-section-label {
+    font-size: 13px; font-weight: 700;
+    color: #1e293b;
+    padding: 20px 8px 10px 12px;
+}
 
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 9px 12px; border-radius: 8px;
-            color: #c8ddb0; font-size: 13px; font-weight: 500;
-            transition: all .15s; margin-bottom: 2px;
-        }
-        .nav-item i { width: 18px; text-align: center; font-size: 13px; color: var(--green-500); flex-shrink: 0; }
-        .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
-        .nav-item:hover i { color: var(--green-300); }
-        .nav-item.active { background: var(--green-700); color: #fff; }
-        .nav-item.active i { color: var(--green-300); }
+.nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 8px;
+    color: var(--text-muted); font-size: 14px; font-weight: 500;
+    transition: all .2s; margin-bottom: 4px;
+}
+.nav-item i { width: 18px; text-align: center; font-size: 15px; color: var(--text-muted); flex-shrink: 0; }
+.nav-item:hover, .nav-item.active { background: #f0fdf4; color: var(--green-500); }
+.nav-item:hover i, .nav-item.active i { color: var(--green-500); }
 
-        .nav-dropdown-toggle { cursor: pointer; user-select: none; }
-        .nav-dropdown-toggle .dropdown-arrow { margin-left: auto; font-size: 10px; transition: transform .25s ease; color: var(--green-500); }
-        .nav-dropdown-toggle.open { background: rgba(255,255,255,.07); color: #fff; }
-        .nav-dropdown-toggle.open .dropdown-arrow { transform: rotate(180deg); }
-        .nav-dropdown { overflow: hidden; max-height: 0; transition: max-height .3s ease; }
-        .nav-dropdown.open { max-height: 300px; }
-        .nav-sub-item { padding-left: 40px !important; font-size: 12.5px !important; color: #a8c98a !important; margin-bottom: 1px; }
-        .nav-sub-item:hover { background: rgba(255,255,255,.06) !important; color: #fff !important; }
-        .nav-sub-item.active { background: var(--green-700) !important; color: #fff !important; }
+/* Dropdown styling to match the light theme */
+.nav-dropdown-toggle .dropdown-arrow { margin-left: auto; font-size: 10px; transition: transform .25s ease; color: var(--text-muted); }
+.nav-dropdown-toggle.open .dropdown-arrow { transform: rotate(180deg); }
+.nav-dropdown { overflow: hidden; max-height: 0; transition: max-height .3s ease; }
+.nav-dropdown.open { max-height: 300px; }
+.nav-sub-item { padding-left: 44px !important; font-size: 13.5px !important; color: var(--text-muted) !important; }
+.nav-sub-item:hover { background: #f0fdf4 !important; color: var(--green-500) !important; }
+.nav-sub-item.active { background: transparent !important; color: var(--green-500) !important; font-weight: 600; }
 
-        .sidebar-footer { padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.08); }
-        .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; }
-        .sidebar-user-avatar { width: 32px; height: 32px; background: var(--green-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
-        .sidebar-user-info strong { display: block; font-size: 12px; font-weight: 700; color: #fff; }
-        .sidebar-user-info span { font-size: 11px; color: var(--green-500); }
 
-        .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px; }
+.sidebar-user-avatar { width: 32px; height: 32px; background: var(--green-500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; }
+.sidebar-user-info strong { display: block; font-size: 13px; font-weight: 600; color: var(--text); }
+.sidebar-user-info span { font-size: 11px; color: var(--text-muted); }
 
-        .topbar { height: var(--topbar-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 0 var(--border); }
-        .topbar-left { display: flex; align-items: center; gap: 14px; }
-        .topbar-menu-btn { display: none; background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; padding: 4px; }
-        .topbar-title { font-size: 18px; font-weight: 800; color: var(--green-800); letter-spacing: -.4px; }
-        .topbar-right { display: flex; align-items: center; gap: 10px; }
-        .topbar-btn { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); font-size: 14px; position: relative; transition: all .15s; }
-        .topbar-btn:hover { background: var(--green-50); color: var(--green-700); border-color: var(--green-300); }
-        .topbar-user { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: background .15s; }
-        .topbar-user:hover { background: var(--bg); }
-        .topbar-user-avatar { width: 32px; height: 32px; background: var(--green-700); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; }
-        .topbar-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 
-        .page-content { flex: 1; padding: 28px; }
+/* Topbar Minimalist Transformation */
+.topbar { height: var(--topbar-h); background: #ffffff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 100; }
+.topbar-title { font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -.4px; }
+.topbar-right { display: flex; align-items: center; gap: 15px; }
+.topbar-user-avatar { width: 35px; height: 35px; background: var(--green-500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #fff; }
+.topbar-user-name { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+
+        .page-content { flex: 1; padding: 10px;
+    height:auto }
 
         .flash-wrap { margin-bottom: 20px; }
         .alert { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; margin-bottom: 10px; animation: slideDown .2s ease; }
@@ -138,13 +118,18 @@
         .alert-close:hover { opacity: 1; }
 
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-        .card-pad { padding: 24px; }
+        .card-pad { padding: 24px; overflow:visible !important;}
 
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        thead tr { background: var(--green-50); }
-        th { padding: 10px 12px; text-align: left; font-weight: 700; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--green-700); border-bottom: 2px solid var(--green-200); white-space: nowrap; }
-        td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
-        tbody tr:hover { background: var(--green-50); }
+                    thead{
+                background:#f5f7f9;
+            }
+
+      
+
+       
+    
+
+
         tbody tr:last-child td { border-bottom: none; }
 
         .avatar { width: 35px; height: 35px; border-radius: 50%; background: var(--green-700); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }
@@ -203,6 +188,43 @@
             .topbar { padding: 0 16px; }
             .page-content { padding: 16px; }
         }
+        /* Desktop par toggle button hamesha hidden rahega */
+.topbar-menu-btn { 
+    display: none !important; 
+}
+
+/* 300px se 768px tak ki screens (Tablets aur Mobile) ke liye rules */
+@media (min-width: 300px) and (max-width: 768px) {
+    .sidebar { 
+        transform: translateX(-100%); 
+    }
+    .sidebar.open { 
+        transform: translateX(0); 
+    }
+    .sidebar-overlay.open { 
+        display: block; 
+    }
+    .main { 
+        margin-left: 0; 
+    }
+    /* Choti screen par button dikhega aur click sahi se register hoga */
+    .topbar-menu-btn { 
+        display: flex !important; 
+        background: none; 
+        border: none; 
+        font-size: 20px; 
+        color: var(--text-muted); 
+        cursor: pointer; 
+        padding: 4px;
+        z-index: 999;
+    }
+    .topbar { 
+        padding: 0 16px; 
+    }
+    .page-content { 
+        padding: 16px; 
+    }
+}
     </style>
 
     @stack('styles')
@@ -263,7 +285,7 @@
             </a>
         </nav>
 
-        <div class="sidebar-footer">
+        <!-- <div class="sidebar-footer">
             <div class="sidebar-user">
                 <div class="sidebar-user-avatar">
                     {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
@@ -273,34 +295,61 @@
                     <span>Administrator</span>
                 </div>
             </div>
-        </div>
+        </div> -->
 
     </aside>
 
     <div class="main">
 
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="topbar-menu-btn" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
+<header class="topbar">
+    <div class="topbar-left">
+        <button class="topbar-menu-btn" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="topbar-title">@yield('page-title', 'Dashboard')</span>
+    </div>
+    
+    <div class="topbar-right" style="position: relative;">
+        <div class="topbar-user" id="profileDropdownTrigger" style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: #ffffff; cursor: pointer; user-select: none;">
+            <div class="topbar-user-avatar" style="width: 32px; height: 32px; background: var(--green-700); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff;">
+                {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+            </div>
+            <span class="topbar-user-name" style="font-size: 13px; font-weight: 600; color: var(--text);">{{ Auth::user()->name ?? 'Admin' }}</span>
+            <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-muted); margin-left: 2px;"></i>
+        </div>
+
+        <div id="profileDropdownCard" style="display: none; position: absolute; top: 110%; right: 0; background: #ffffff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05); width: 150px; z-index: 1000; overflow: hidden;">
+            <a href="#" style="display: block; padding: 10px 16px; color: var(--text); font-size: 13px; font-weight: 500; text-decoration: none; border-bottom: 1px solid var(--border);" onmouseover="this.style.background='#f8faf9'" onmouseout="this.style.background='none'">
+                My Profile
+            </a>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                @csrf
+                <button type="submit" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; color: #ef4444; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='none'">
+                    Logout
                 </button>
-                <span class="topbar-title">@yield('page-title', 'Dashboard')</span>
-            </div>
-            <div class="topbar-right">
-                <div class="topbar-user">
-                    <div class="topbar-user-avatar">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                    </div>
-                    <span class="topbar-user-name">{{ Auth::user()->name ?? 'Admin' }}</span>
-                </div>
-                <form method="POST" action="{{ route('logout') }}" style="margin:0;">
-                    @csrf
-                    <button type="submit" class="topbar-btn" title="Logout">
-                        <i class="fas fa-right-from-bracket"></i>
-                    </button>
-                </form>
-            </div>
-        </header>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('profileDropdownTrigger').addEventListener('click', function(event) {
+            event.stopPropagation();
+            var card = document.getElementById('profileDropdownCard');
+            if (card.style.display === 'none' || card.style.display === '') {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function() {
+            var card = document.getElementById('profileDropdownCard');
+            if (card) {
+                card.style.display = 'none';
+            }
+        });
+    </script>
+</header>
 
         <main class="page-content">
             <div class="flash-wrap">
@@ -370,6 +419,8 @@
 </script>
 
 @stack('scripts')
-
+*{
+    outline:1px solid red;
+}
 </body>
 </html>
