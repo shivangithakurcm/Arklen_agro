@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
     // ── Members ────────────────────────────────────────
     Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
     Route::get('/members',                      [MemberController::class, 'index'])->name('members.index');
+    Route::get('/members/next-seller-id',       [MemberController::class, 'nextSellerId'])->name('members.next-seller-id');
     Route::post('/members',                     [MemberController::class, 'store'])->name('members.store');
     Route::get('/members/{member}',             [MemberController::class, 'show'])->name('members.show');
     Route::get('/members/{member}/edit',        [MemberController::class, 'edit'])->name('members.edit');

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Create Order — Arklen Agro')
+@section('title', 'Create Order — 2APL Marketing')
 @section('page-title', 'Create Order')
 
 @push('styles')
@@ -74,7 +74,7 @@
     <form method="POST" action="{{ route('orders.store') }}" id="createForm">
         @csrf
         <input type="hidden" name="punch_by" value="{{ auth()->user()->seller_id }}">
-
+        
        
 
               
@@ -135,8 +135,7 @@
             <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;line-height:1;">&times;</button>
         </div>
 
-        <form method="POST" action="{{ route('members.store') }}">
-            @csrf
+        <form onsubmit="return false;">
             <input type="hidden" name="from_order" value="1">
             <input type="hidden" name="date_of_joining" id="modal_date">
 
@@ -192,8 +191,8 @@
             </div>
 
             <div style="margin-top:16px;display:flex;gap:10px;">
-                <button type="submit" class="page-btn btn-green">
-                    <i class="fas fa-user-plus"></i> Register Member
+                <button type="button" onclick="saveModalData()" class="page-btn btn-green">
+                    <i class="fas fa-user-plus"></i> Save
                 </button>
                 <button type="button" onclick="closeModal()" class="page-btn btn-grey">Cancel</button>
             </div>
@@ -220,6 +219,7 @@ const productOptions = [
 ];
 
 let rowCount = 0;
+let currentModalRow = null;
 
 
 
@@ -231,20 +231,33 @@ function addRow(prefill = {}) {
     tr.id = 'row-' + idx;
 
     tr.innerHTML =
+        '<td style="display:none;">' + `
+        <input type="hidden" name="rows[${idx}][modal_first_name]" value="${prefill.modal_first_name || ''}">
+        <input type="hidden" name="rows[${idx}][modal_last_name]" value="${prefill.modal_last_name || ''}">
+        <input type="hidden" name="rows[${idx}][modal_mobile]" value="${prefill.modal_mobile || ''}">
+        <input type="hidden" name="rows[${idx}][modal_aadhar]" value="${prefill.modal_aadhar || ''}">
+        <input type="hidden" name="rows[${idx}][modal_sponsor]" value="${prefill.modal_sponsor || ''}">
+        <input type="hidden" name="rows[${idx}][modal_leg]" value="${prefill.modal_leg || ''}">
+        <input type="hidden" name="rows[${idx}][modal_city_select]" value="${prefill.modal_city_select || ''}">
+        <input type="hidden" name="rows[${idx}][modal_address]" value="${prefill.modal_address || ''}">
+        <input type="hidden" name="rows[${idx}][modal_password]" value="${prefill.modal_password || ''}">
+        <input type="hidden" name="rows[${idx}][modal_confirm_password]" value="${prefill.modal_confirm_password || ''}">
+        <input type="hidden" name="rows[${idx}][modal_date]" value="${prefill.modal_date || ''}">
+        ` + '</td>' +
         '<td class="rnum">' + idx + '</td>' +
-        '<td><input type="text" name="rows[' + idx + '][name]" class="ri" placeholder="Full name" value="' + (prefill.name || '') + '" autocomplete="off"></td>' +
-        '<td><input type="text" name="rows[' + idx + '][aadhar]" class="ri" placeholder="12-digit" value="' + (prefill.aadhar || '') + '" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,12)"></td>' +
-        '<td><input type="text" name="rows[' + idx + '][mobile]" class="ri" placeholder="Mobile" value="' + (prefill.mobile || '') + '" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,10)"></td>' +
+        '<td><input type="text" name="rows[' + idx + '][name]" class="ri" placeholder="Full name" value="' + (prefill.name || '') + '" autocomplete="off" required></td>' +
+        '<td><input type="text" name="rows[' + idx + '][aadhar]" class="ri" placeholder="12-digit" value="' + (prefill.aadhar || '') + '" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,12)" required></td>' +
+        '<td><input type="text" name="rows[' + idx + '][mobile]" class="ri" placeholder="Mobile" value="' + (prefill.mobile || '') + '" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,10)" required></td>' +
 
         // ✅ Product dropdown — Sponsor se pehle
-        '<td style="min-width:160px;"><select name="rows[' + idx + '][product_id]" id="rowproduct-' + idx + '" style="width:100%;"><option value="">-- Select --</option></select></td>' +
+        '<td style="min-width:160px;"><select name="rows[' + idx + '][product_id]" id="rowproduct-' + idx + '" style="width:100%;" required><option value="">-- Select --</option></select></td>' +
 
-        '<td style="min-width:200px;"><select name="rows[' + idx + '][sponsor_id]" id="sponsor-' + idx + '" style="width:100%;"><option value="">-- Select Sponsor --</option></select></td>' +
-        '<td><select name="rows[' + idx + '][leg]" class="leg-sel">' +
+        '<td style="min-width:200px;"><select name="rows[' + idx + '][sponsor_id]" id="sponsor-' + idx + '" style="width:100%;" required><option value="">-- Select Sponsor --</option></select></td>' +
+        '<td><select name="rows[' + idx + '][leg]" class="leg-sel" required>' +
             '<option value="left" ' + ((prefill.leg === 'right') ? '' : 'selected') + '>&#9664; Left</option>' +
             '<option value="right" ' + ((prefill.leg === 'right') ? 'selected' : '') + '>&#9654; Right</option>' +
         '</select></td>' +
-        '<td><input type="number" name="rows[' + idx + '][amount]" class="ri" placeholder="0.00" min="0" step="0.01" value="' + (prefill.amount || '') + '" oninput="recalc()" style="font-weight:700;color:#3a6110;"></td>' +
+        '<td><input type="number" name="rows[' + idx + '][amount]" class="ri" placeholder="0.00" min="0" step="0.01" value="' + (prefill.amount || '') + '" oninput="recalc()" style="font-weight:700;color:#3a6110;" required></td>' +
         '<td><div class="rac">' +
             '<button type="button" class="rbtn rbtn-del" onclick="removeRow(' + idx + ')" title="Remove">&minus;</button>' +
             '<button type="button" class="rbtn rbtn-add" onclick="addRow()" title="Add">+</button>' +
@@ -297,16 +310,77 @@ function openModal(idx) {
     const aadhar  = row.querySelector('input[name$="[aadhar]"]').value;
     const sponsor = $(`#sponsor-${idx}`).val() || '';
     const leg     = row.querySelector('select[name$="[leg]"]').value;
+    const firstName = row.querySelector(`input[name="rows[${idx}][modal_first_name]"]`)?.value || name.split(' ')[0] || '';
+    const lastName  = row.querySelector(`input[name="rows[${idx}][modal_last_name]"]`)?.value || name.split(' ').slice(1).join(' ') || '';
+    const city      = row.querySelector(`input[name="rows[${idx}][modal_city_select]"]`)?.value || '';
+    const address   = row.querySelector(`input[name="rows[${idx}][modal_address]"]`)?.value || '';
+    const password  = row.querySelector(`input[name="rows[${idx}][modal_password]"]`)?.value || '';
+    const confirmPassword = row.querySelector(`input[name="rows[${idx}][modal_confirm_password]"]`)?.value || '';
+    const modalDate = row.querySelector(`input[name="rows[${idx}][modal_date]"]`)?.value || document.getElementById('orderDate').value;
 
-    document.getElementById('modal_first_name').value = name.split(' ')[0] || '';
-    document.getElementById('modal_last_name').value  = name.split(' ').slice(1).join(' ') || '';
+    currentModalRow = idx;
+    document.getElementById('modal_first_name').value = firstName;
+    document.getElementById('modal_last_name').value  = lastName;
     document.getElementById('modal_mobile').value     = mobile;
     document.getElementById('modal_aadhar').value     = aadhar;
     document.getElementById('modal_sponsor').value    = sponsor;
     document.getElementById('modal_leg').value        = leg;
-    document.getElementById('modal_date').value       = document.getElementById('orderDate').value;
+    document.getElementById('citySelect').value       = city;
+    document.querySelector('#registerModal input[name="address"]').value = address;
+    document.querySelector('#registerModal input[name="password"]').value = password;
+    document.querySelector('#registerModal input[name="password_confirmation"]').value = confirmPassword;
+    document.getElementById('modal_date').value       = modalDate;
 
     document.getElementById('registerModal').style.display = 'flex';
+}
+
+function saveModalData() {
+    if (!currentModalRow) return;
+    const idx = currentModalRow;
+    const row = document.getElementById('row-' + idx);
+    if (!row) return;
+
+    const firstName = document.getElementById('modal_first_name').value.trim();
+    const lastName = document.getElementById('modal_last_name').value.trim();
+    const mobile = document.getElementById('modal_mobile').value.trim();
+    const aadhar = document.getElementById('modal_aadhar').value.trim();
+    const sponsor = document.getElementById('modal_sponsor').value.trim();
+    const leg = document.getElementById('modal_leg').value;
+    const city = document.getElementById('citySelect').value;
+    const address = document.querySelector('#registerModal input[name="address"]').value.trim();
+    const password = document.querySelector('#registerModal input[name="password"]').value;
+    const confirmPassword = document.querySelector('#registerModal input[name="password_confirmation"]').value;
+    const modalDate = document.getElementById('modal_date').value;
+
+    if (password && password.length < 4) {
+        alert('Password must be at least 4 characters long.');
+        return;
+    }
+    if (password !== confirmPassword) {
+        alert('Password and Confirm Password do not match.');
+        return;
+    }
+
+    row.querySelector(`input[name="rows[${idx}][modal_first_name]"]`).value = firstName;
+    row.querySelector(`input[name="rows[${idx}][modal_last_name]"]`).value = lastName;
+    row.querySelector(`input[name="rows[${idx}][modal_mobile]"]`).value = mobile;
+    row.querySelector(`input[name="rows[${idx}][modal_aadhar]"]`).value = aadhar;
+    row.querySelector(`input[name="rows[${idx}][modal_sponsor]"]`).value = sponsor;
+    row.querySelector(`input[name="rows[${idx}][modal_leg]"]`).value = leg;
+    row.querySelector(`input[name="rows[${idx}][modal_city_select]"]`).value = city;
+    row.querySelector(`input[name="rows[${idx}][modal_address]"]`).value = address;
+    row.querySelector(`input[name="rows[${idx}][modal_password]"]`).value = password;
+    row.querySelector(`input[name="rows[${idx}][modal_confirm_password]"]`).value = confirmPassword;
+    row.querySelector(`input[name="rows[${idx}][modal_date]"]`).value = modalDate;
+
+    const fullName = [firstName, lastName].filter(Boolean).join(' ');
+    row.querySelector('input[name$="[name]"]').value = fullName;
+    row.querySelector('input[name$="[mobile]"]').value = mobile;
+    row.querySelector('input[name$="[aadhar]"]').value = aadhar;
+    $(`#sponsor-${idx}`).val(sponsor).trigger('change');
+    row.querySelector('select[name$="[leg]"]').value = leg;
+
+    closeModal();
 }
 
 function closeModal() {

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Dashboard — Arklen Agro')
+@section('title', 'Dashboard — 2APL Marketing')
 @section('page-title', 'Overview')
 
 @section('content')
@@ -96,7 +96,7 @@
         <span class="dash-value">{{ number_format($totalMembers) }}</span>
     </div>
 
-    {{-- Total Order Qty --}}
+    <!-- {{-- Total Order Qty --}}
     <div class="dash-card">
         <div class="dash-card-header">
             <span class="dash-label">Total Order Qty</span>
@@ -105,10 +105,10 @@
             </svg>
         </div>
         <span class="dash-value">{{ number_format($totalOrderQty) }} <sub>Pcs.</sub></span>
-    </div>
+    </div> -->
 
     {{-- Total Order Value --}}
-    <div class="dash-card">
+    <!-- <div class="dash-card">
         <div class="dash-card-header">
             <span class="dash-label">Total Order Value</span>
             <svg class="dash-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -116,7 +116,7 @@
             </svg>
         </div>
         <span class="dash-value">₹{{ number_format($totalOrderValue) }}</span>
-    </div>
+    </div> -->
 
     {{-- Total Left --}}
     <div class="dash-card">
@@ -129,15 +129,7 @@
         <span class="dash-value">{{ number_format($totalLeft) }}</span>
     </div>
 
-    {{-- Total Income — highlighted center --}}
-    <div class="dash-card highlight col-center">
-        <div class="dash-card-header">
-            <span class="dash-label">Total Income</span>
-        </div>
-        <span class="dash-value">₹{{ number_format($totalIncome) }}</span>
-    </div>
-
-    {{-- Total Right --}}
+      {{-- Total Right --}}
     <div class="dash-card">
         <div class="dash-card-header">
             <span class="dash-label">Total Right</span>
@@ -147,20 +139,17 @@
         </div>
         <span class="dash-value">{{ number_format($totalRight) }}</span>
     </div>
-
-    {{-- Commission Distributed — center bottom --}}
-    <div class="dash-card col-center">
+    
+    {{-- Total Income — highlighted center --}}
+    <div class="dash-card highlight col-left">
         <div class="dash-card-header">
-            <span class="dash-label">Commission Distributed</span>
+            <span class="dash-label">Total Income</span>
         </div>
-        <span class="dash-value">₹{{ number_format($totalCommission) }}</span>
-        @php
-            $pct = $totalIncome > 0 ? min(100, round(($totalCommission / $totalIncome) * 100)) : 0;
-        @endphp
-        <div class="progress-wrap">
-            <div class="progress-fill" style="width:{{ $pct }}%"></div>
-        </div>
+        <span class="dash-value">₹{{ number_format($totalIncome) }}</span>
     </div>
+
+  
+
 
 </div>
 @endsection

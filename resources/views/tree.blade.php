@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Binary Tree — Arklen Agro')
+@section('title', 'Binary Tree — 2APL Marketing')
 @section('page-title', 'Binary Tree')
 
 @section('content')
@@ -93,7 +93,7 @@ window.addEventListener('DOMContentLoaded', function() {
            '<div class="tnode" style="background:var(--green-800);border-color:var(--green-900);padding:12px 20px;">' +
     '<img src="/images/arklen-logo.png" style="width:40px;height:40px;object-fit:contain;display:block;margin:0 auto 6px;">' +
     '<div class="tnode-id" style="color:#fff;">ARKLEN</div>' +
-    '<div class="tnode-name" style="color:#9ac46b;">Agro Pvt. Ltd</div>' +
+    '<div class="tnode-name" style="color:#9ac46b;">2 APL Marketing</div>' +
 '</div>' +
             '<div class="tchildren">' + branches + '</div>' +
         '</div>';

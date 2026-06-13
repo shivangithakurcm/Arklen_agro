@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Seller Profile — Arklen Agro')
+@section('title', 'Seller Profile — 2APL Marketing')
 @section('page-title', 'Seller Profile')
 
 @section('content')
@@ -45,6 +45,20 @@
                         <td style="font-weight:600;">{{ $member->sponsor_id ?? '-' }}</td>
                     </tr>
                 </table>
+                <div class="stat-grid" style="margin-top:15px;">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Income</div>
+                        <div class="stat-val">₹{{ number_format($totalCommission ?? 0, 2) }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Sponsor Income (%)</div>
+                        <div class="stat-val">{{ number_format($sponsorIncomePercentage ?? 0, 2) }}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Team Income (%)</div>
+                        <div class="stat-val">{{ number_format($teamIncomePercentage ?? 0, 2) }}%</div>
+                    </div>
+                </div>  
             </div>
             <div style="align-self:flex-start;">
                 <a href="{{ route('members.edit', $member) }}" class="btn btn-primary">
@@ -106,10 +120,11 @@
                 <div class="stat-label">Right BV</div>
                 <div class="stat-val">{{ number_format($member->bv_right, 2) }}</div>
             </div>
-            <div class="stat-card">
+
+            <!-- <div class="stat-card">
                 <div class="stat-label">Team BV</div>
                 <div class="stat-val">{{ number_format($member->team_bv, 2) }}</div>
-            </div>
+            </div> -->
         </div>
     </div>
 

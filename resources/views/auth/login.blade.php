@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Login — Arklen Agro</title>
+<title>Login — 2APL Marketing</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
@@ -85,8 +85,8 @@
 <body>
 <div class="card">
   <div class="brand">
-    <img src="{{ asset('images/arklen-logo.png') }}" alt="Arklen Agro Logo"/>
-    <div class="brand-name">Arklen Agro Pvt. Ltd</div>
+    <img src="{{ asset('images/2apl_logo.svg') }}" alt="2APL Marketing Logo"/>
+    <div class="brand-name">2APL Marketing</div>
   </div>
   <div class="divider"></div>
 

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Order Detail — Arklen Agro')
+@section('title', 'Order Detail — 2APL Marketing')
 @section('page-title', 'Order Detail')
 
 @section('content')

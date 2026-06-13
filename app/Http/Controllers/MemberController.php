@@ -4,38 +4,137 @@ namespace App\Http\Controllers;
 
 use App\Models\Member;
 use App\Models\Product;
+use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Order;
+use Log;
 
 class MemberController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Member::query();
+    // public function index(Request $request)
+    // {
+    //     $query = Member::query();
 
-        if ($request->filled('sponsor_id')) {
-            $query->where('sponsor_id', $request->sponsor_id);
-        }
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('first_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('last_name',  'like', '%'.$request->search.'%')
-                  ->orWhere('contact',    'like', '%'.$request->search.'%');
-            });
-        }
+    //     if ($request->filled('sponsor_id')) {
+    //         $query->where('sponsor_id', $request->sponsor_id);
+    //     }
+    //     if ($request->filled('search')) {
+    //         $query->where(function($q) use ($request) {
+    //             $q->where('first_name', 'like', '%'.$request->search.'%')
+    //               ->orWhere('last_name',  'like', '%'.$request->search.'%')
+    //               ->orWhere('contact',    'like', '%'.$request->search.'%');
+    //         });
+    //     }
 
-        $members      = $query->latest()->paginate(5);
-        $allMembers   = Member::where('is_active', 1)
-                              ->orderBy('first_name')
-                              ->get(['id', 'seller_id', 'first_name', 'last_name']);
-        $products     = Product::orderBy('product_name')->get();
-        $nextSellerId = Member::generateSellerId();
-        $prefill      = [];
+    //     $members      = $query->latest()->paginate(5);
+    //     $allMembers   = Member::where('is_active', 1)
+    //                           ->orderBy('first_name')
+    //                           ->get(['id', 'seller_id', 'first_name', 'last_name']);
+    //     $products     = Product::orderBy('product_name')->get();
+    //     $cities       = City::orderBy('name')->get();
+    //     $nextSellerId = Member::generateSellerId();
+    //     $prefill      = [];
 
-        return view('members.index', compact('members', 'allMembers', 'products', 'nextSellerId', 'prefill'));
+    //     return view('members.index', compact('members', 'allMembers', 'products', 'cities', 'nextSellerId', 'prefill'));
+    // }
+
+
+public function index(Request $request)
+{
+    Log::info('Members index started', [
+        'request' => $request->all()
+    ]);
+
+    $start = microtime(true);
+
+    $query = Member::query();
+
+    if ($request->filled('sponsor_id')) {
+        Log::info('Applying sponsor filter', [
+            'sponsor_id' => $request->sponsor_id
+        ]);
+
+        $query->where('sponsor_id', $request->sponsor_id);
     }
+
+    if ($request->filled('search')) {
+        Log::info('Applying search filter', [
+            'search' => $request->search
+        ]);
+
+        $query->where(function ($q) use ($request) {
+            $q->where('first_name', 'like', '%' . $request->search . '%')
+              ->orWhere('last_name', 'like', '%' . $request->search . '%')
+              ->orWhere('contact', 'like', '%' . $request->search . '%');
+        });
+    }
+
+    Log::info('Before paginate', [
+        'elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    $members = $query->latest()->paginate(5);
+
+    Log::info('Members pagination completed', [
+        'count' => $members->count(),
+        'elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    Log::info('Loading all active members');
+
+    $allMembers = Member::where('is_active', 1)
+        ->orderBy('first_name')
+        ->get(['id', 'seller_id', 'first_name', 'last_name']);
+
+    Log::info('All active members loaded', [
+        'count' => $allMembers->count(),
+        'elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    Log::info('Loading products');
+
+    $products = Product::orderBy('product_name')->get();
+
+    Log::info('Products loaded', [
+        'count' => $products->count(),
+        'elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    Log::info('Loading cities');
+
+    $cities = City::orderBy('name')->get();
+
+    Log::info('Cities loaded', [
+        'count' => $cities->count(),
+        'elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    Log::info('Generating seller id');
+
+    $nextSellerId = Member::generateSellerId();
+
+    Log::info('Seller id generated', [
+        'seller_id' => $nextSellerId,
+        'elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    $prefill = [];
+
+    Log::info('Returning members index view', [
+        'total_elapsed_seconds' => round(microtime(true) - $start, 2)
+    ]);
+
+    return view('members.index', compact(
+        'members',
+        'allMembers',
+        'products',
+        'cities',
+        'nextSellerId',
+        'prefill'
+    ));
+}
 
     public function create(Request $request)
     {
@@ -54,6 +153,7 @@ class MemberController extends Controller
                               ->orderBy('first_name')
                               ->get(['id', 'seller_id', 'first_name', 'last_name']);
         $products     = Product::orderBy('product_name')->get();
+        $cities       = City::orderBy('name')->get();
         $nextSellerId = Member::generateSellerId();
 
         $prefill = [
@@ -64,7 +164,7 @@ class MemberController extends Controller
             'position'   => $request->leg ?? 'left',
         ];
 
-        return view('members.index', compact('members', 'allMembers', 'products', 'nextSellerId', 'prefill'));
+        return view('members.index', compact('members', 'allMembers', 'products', 'cities', 'nextSellerId', 'prefill'));
     }
 
     public function store(Request $request)
@@ -148,26 +248,26 @@ class MemberController extends Controller
             ]
         );
 
-        // ✅ Order sirf non-from_order par banao
-        if ($product && !$request->from_order) {
-            \App\Models\Order::create([
-                'order_no'       => 'ORD-' . strtoupper(uniqid()),
-                'member_id'      => $member->id,
-                'product_id'     => $product->id,
-                'order_date'     => $member->date_of_joining,
-                'order_product'  => $product->product_name,
-                'order_quantity' => 1,
-                'order_value'    => $product->product_price,
-                'total_value'    => $product->product_price,
-                'total_bv'       => round(($product->business_value / 100) * $product->product_price, 2),
-                'status'         => 'delivered',
-            ]);
-        }
+        // // ✅ Order sirf non-from_order par banao
+        // if ($product && !$request->from_order) {
+        //     \App\Models\Order::create([
+        //         'order_no'       => 'ORD-' . strtoupper(uniqid()),
+        //         'member_id'      => $member->id,
+        //         'product_id'     => $product->id,
+        //         'order_date'     => $member->date_of_joining,
+        //         'order_product'  => $product->product_name,
+        //         'order_quantity' => 1,
+        //         'order_value'    => $product->product_price,
+        //         'total_value'    => $product->product_price,
+        //         'total_bv'       => round(($product->business_value / 100) * $product->product_price, 2),
+        //         'status'         => 'delivered',
+        //     ]);
+        // }
 
         // ✅ Commission — sahi product aur sahi amount se
-        if ($product) {
-            $member->distributeCommission($product, 1, $subOrderAmount);
-        }
+        // if ($product) {
+        //     $member->distributeCommission($product, 1, $subOrderAmount);
+        // }
 
         if ($request->from_order) {
             return redirect()->back()->with('success', 'Member registered successfully!');
@@ -202,7 +302,21 @@ class MemberController extends Controller
 
     public function show(Member $member)
     {
-        return view('members.seller-profile', compact('member'));
+        // ensure numeric values
+        $directIncome    = (float) ($member->direct_commission ?? 0);
+        $level1Income    = (float) ($member->level1_commission ?? 0);
+        $level2Income    = (float) ($member->level2_commission ?? 0);
+        $newJoineeIncome = (float) ($member->new_joinee_income ?? 0);
+
+        $totalCommission = $directIncome + $level1Income + $level2Income + $newJoineeIncome;
+
+        // team income is level1 + level2
+        $teamIncome = $level1Income + $level2Income;
+
+        $teamIncomePercentage = $totalCommission ? round(($teamIncome / $totalCommission) * 100, 2) : 0;
+        $sponsorIncomePercentage = $totalCommission ? round(($directIncome / $totalCommission) * 100, 2) : 0;
+
+        return view('members.seller-profile', compact('member', 'totalCommission', 'teamIncomePercentage', 'sponsorIncomePercentage'));
     }
 
     public function edit(Member $member)
@@ -280,5 +394,12 @@ class MemberController extends Controller
                          ->get()
                          ->keyBy('seller_id');
         return view('tree', compact('members'));
+    }
+
+    public function nextSellerId()
+    {
+        return response()->json([
+            'seller_id' => Member::generateSellerId(),
+        ]);
     }
 }

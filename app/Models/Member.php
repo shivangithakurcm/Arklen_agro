@@ -66,11 +66,58 @@ class Member extends Authenticatable
             : null;
     }
 
+    public function getBusinessValue(?Product $product = null, int $qty = 1, float $amount = 0): float
+    {
+        $product = $product ?? $this->product;
+        if (!$product) {
+            return 0;
+        }
+
+        $base = $amount > 0
+            ? $amount
+            : (($product->product_price ?? 0) * $qty);
+
+        return round(($product->business_value / 100) * $base, 2);
+    }
+
+    public function distributeBV(?Product $product = null, int $qty = 1, float $amount = 0): void
+    {
+        $bv = $this->getBusinessValue($product, $qty, $amount);
+        if ($bv <= 0) {
+            return;
+        }
+
+        // Walk up the placement (parent_id) chain and credit BV to each ancestor
+        // based on which leg the lower node occupies relative to that ancestor.
+        $child = $this; // start from the buyer
+        $currentParentSellerId = $child->parent_id;
+
+        while (!empty($currentParentSellerId)) {
+            $parent = self::where('seller_id', $currentParentSellerId)->first();
+            if (!$parent) break;
+
+            $leg = $child->position ?? 'left';
+            if ($leg === 'left') {
+                $parent->increment('bv_left', $bv);
+            } else {
+                $parent->increment('bv_right', $bv);
+            }
+
+            $parent->increment('team_bv', $bv);
+
+            // move one step up
+            $child = $parent;
+            $currentParentSellerId = $child->parent_id;
+        }
+    }
+
     // ✅ amount parameter add kiya — actual purchase amount se commission
-    public function distributeCommission(Product $product = null, int $qty = 1, float $amount = 0)
+    public function distributeCommission(?Product $product = null, int $qty = 1, float $amount = 0)
     {
         $product = $product ?? $this->product;
         if (!$product) return;
+
+        $this->distributeBV($product, $qty, $amount);
 
         // ✅ Agar actual amount pass hua toh wahi use karo, warna product price * qty
         $price = $amount > 0 ? $amount : (($product->product_price ?? 0) * $qty);
@@ -85,8 +132,10 @@ class Member extends Authenticatable
                         ? Member::where('seller_id', $level1Parent->sponsor_id)->first()
                         : null;
 
-        $isFirstOrder = true;
+        // $isFirstOrder = true;
 
+        $newJoineeIncome = $pct('new_joinee');
+        $this->increment('new_joinee_income', $newJoineeIncome);
         if ($directParent) {
             // ✅ Direct Commission
             $amount_dc = $pct('direct_commission');
@@ -96,15 +145,15 @@ class Member extends Authenticatable
                 $directParent->increment('balance',           $amount_dc);
             }
 
-            // ✅ New Joinee — sirf pehle order par
-            if ($isFirstOrder) {
-                $amount_nj = $pct('new_joinee');
-                if ($amount_nj > 0) {
-                    $directParent->increment('new_joinee_income', $amount_nj);
-                    $directParent->increment('total_income',      $amount_nj);
-                    $directParent->increment('balance',           $amount_nj);
-                }
-            }
+            // // ✅ New Joinee — sirf pehle order par
+            // if ($isFirstOrder) {
+            //     $amount_nj = $pct('new_joinee');
+            //     if ($amount_nj > 0) {
+            //         // $directParent->increment('new_joinee_income', $amount_nj);
+            //         $directParent->increment('total_income',      $amount_nj);
+            //         $directParent->increment('balance',           $amount_nj);
+            //     }
+            // }
         }
 
         // ✅ Level 1
@@ -129,7 +178,7 @@ class Member extends Authenticatable
     }
 
     // ✅ amount parameter add kiya — reverse mein bhi same logic
-    public function reverseCommission(Product $product = null, int $qty = 1, float $amount = 0)
+    public function reverseCommission(?Product $product = null, int $qty = 1, float $amount = 0)
     {
         $product = $product ?? $this->product;
         if (!$product) return;
@@ -185,21 +234,35 @@ class Member extends Authenticatable
         }
     }
 
+    // public static function generateSellerId(): string
+    // {
+    //     do {
+    //         $last = self::where('seller_id', 'like', 'SL%')
+    //                     ->orderByRaw('CAST(SUBSTRING(seller_id, 4) AS UNSIGNED) DESC')
+    //                     ->value('seller_id');
+
+    //         $nextNumber = $last
+    //             ? (int) substr($last, 3) + 1
+    //             : 1001;
+
+    //         $newId = 'SL' . $nextNumber;
+
+    //     } while (self::where('seller_id', $newId)->exists());
+
+    //     return $newId;
+    // }
     public static function generateSellerId(): string
     {
-        do {
-            $last = self::where('seller_id', 'like', 'MLM%')
-                        ->orderByRaw('CAST(SUBSTRING(seller_id, 4) AS UNSIGNED) DESC')
-                        ->value('seller_id');
+        $lastMember = self::select('id', 'seller_id')
+            ->latest('id')
+            ->first();
 
-            $nextNumber = $last
-                ? (int) substr($last, 3) + 1
-                : 1001;
+        if (!$lastMember || !$lastMember->seller_id) {
+            return 'SL1001';
+        }
 
-            $newId = 'MLM' . $nextNumber;
+        $number = (int) preg_replace('/\D/', '', $lastMember->seller_id);
 
-        } while (self::where('seller_id', $newId)->exists());
-
-        return $newId;
+        return 'SL' . ($number + 1);
     }
 }

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Members — Arklen Agro')
+@section('title', 'Members — 2APL Marketing')
 @section('page-title', 'Members')
 
 @push('styles')
@@ -216,28 +216,33 @@
 
                 <div>
                     <label class="form-label">City</label>
-                    <input type="text" name="city" value="{{ old('city') }}" class="form-control" placeholder="e.g. Durg">
+                    <select name="city" class="form-control" style="width:100%;">
+                        <option value="">Select City</option>
+                        @foreach($cities as $city)
+                            <option value="{{ $city->name }}" {{ old('city') == $city->name ? 'selected' : '' }}>{{ $city->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 {{-- Seller ID --}}
                 <div>
                     <label class="form-label">Seller ID <span style="font-weight:400;color:#bbb;font-size:10px;">auto-generated</span></label>
                     <div class="sid-wrap">
-                        <input type="text"
+                                <input type="text"
                             id="sellerIdField"
                             name="seller_id"
-                            value="{{ old('seller_id', \App\Models\Member::generateSellerId()) }}"
+                            value="{{ old('seller_id', $nextSellerId) }}"
                             class="form-control"
                             style="font-weight:600;color:#1e2a14;">
                         <button type="button" class="sid-regen-btn" onclick="regenSellerId()" title="Generate new ID">
-                            <i class="fas fa-rotate"></i> New
+                            <i class="fas fa-rotate"></i> Generate
                         </button>
                     </div>
                 </div>
 
                 {{-- Sponsor ID --}}
                 <div>
-                    <label class="form-label">Sponsor ID</label>
+                    <label class="form-label">Sponsor ID <span style="font-weight:400;color:#bbb;font-size:10px;">select or type</span></label>
                     <select name="sponsor_id" id="sponsor_select" class="form-control" style="width:100%;">
                         <option value="">---- Select Sponsor ----</option>
                         @foreach(\App\Models\Member::orderBy('first_name')->get() as $sponsor)
@@ -377,10 +382,23 @@
 /* ── Select2 init ── */
 $(document).ready(function() {
     $('#sponsor_select').select2({
-        placeholder: '---- Select Sponsor ----',
+        placeholder: '---- Select or Add Sponsor ID ----',
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#addModal')
+        dropdownParent: $('#addModal'),
+        tags: true,
+        tokenSeparators: [','],
+        createTag: function (params) {
+            var term = $.trim(params.term);
+            if (term === '') {
+                return null;
+            }
+            return {
+                id: term,
+                text: term,
+                newTag: true
+            }
+        }
     });
 });
 
@@ -397,13 +415,29 @@ function previewImage(input) {
 }
 
 /* ── Seller ID regen ── */
-function regenSellerId() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let id = 'SL';
-    for (let i = 0; i < 4; i++) {
-        id += Math.floor(Math.random() * 10);
+async function regenSellerId() {
+    const url = '{{ route('members.next-seller-id') }}';
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch seller ID');
+        }
+
+        const data = await response.json();
+        if (data.seller_id) {
+            document.getElementById('sellerIdField').value = data.seller_id;
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Unable to generate seller ID. Please refresh the page and try again.');
     }
-    document.getElementById('sellerIdField').value = id;
 }
 
 /* ── Manual earning toggle ── */

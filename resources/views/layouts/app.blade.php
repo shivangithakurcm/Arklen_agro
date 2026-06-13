@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Arklen Agro')</title>
+    <title>@yield('title', '2APL Marketing')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -24,7 +24,7 @@
             --green-900: #1a2e0a;
             --amber-400: #f59e0b;
             --amber-100: #fef3c7;
-            --sidebar-w: 260px;
+            --sidebar-w: 240px;
             --topbar-h: 64px;
             --bg:        #f5f7f2;
             --surface:   #ffffff;
@@ -44,7 +44,8 @@
 
         .sidebar {
             width: var(--sidebar-w);
-            background: var(--green-900);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -71,9 +72,9 @@
             font-size: 18px; color: #fff; flex-shrink: 0;
         }
         .sidebar-logo-text { display: flex; flex-direction: column; }
-        .sidebar-logo-text strong { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
+        .sidebar-logo-text strong { font-size: 21px; font-weight: 800; color: var(--green-800); letter-spacing: -.3px; }
         .sidebar-logo-text span { font-size: 10px; color: var(--green-400); font-weight: 500; letter-spacing: .5px; text-transform: uppercase; }
-
+    
         .sidebar-nav { padding: 16px 12px; flex: 1; }
 
         .nav-section-label {
@@ -85,23 +86,23 @@
         .nav-item {
             display: flex; align-items: center; gap: 10px;
             padding: 9px 12px; border-radius: 8px;
-            color: #c8ddb0; font-size: 13px; font-weight: 500;
+            color: var(--green-700);; font-size: 13px; font-weight: 500;
             transition: all .15s; margin-bottom: 2px;
         }
         .nav-item i { width: 18px; text-align: center; font-size: 13px; color: var(--green-500); flex-shrink: 0; }
-        .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
-        .nav-item:hover i { color: var(--green-300); }
+        .nav-item:hover { background: var(--green-500); color: #fff; }
+        .nav-item:hover i { color: #fff; }
         .nav-item.active { background: var(--green-700); color: #fff; }
         .nav-item.active i { color: var(--green-300); }
 
         .nav-dropdown-toggle { cursor: pointer; user-select: none; }
         .nav-dropdown-toggle .dropdown-arrow { margin-left: auto; font-size: 10px; transition: transform .25s ease; color: var(--green-500); }
-        .nav-dropdown-toggle.open { background: rgba(255,255,255,.07); color: #fff; }
+        .nav-dropdown-toggle.open { background: var(--green-900); color: #fff; }
         .nav-dropdown-toggle.open .dropdown-arrow { transform: rotate(180deg); }
         .nav-dropdown { overflow: hidden; max-height: 0; transition: max-height .3s ease; }
         .nav-dropdown.open { max-height: 300px; }
-        .nav-sub-item { padding-left: 40px !important; font-size: 12.5px !important; color: #a8c98a !important; margin-bottom: 1px; }
-        .nav-sub-item:hover { background: rgba(255,255,255,.06) !important; color: #fff !important; }
+        .nav-sub-item { padding-left: 40px !important; font-size: 12.5px !important; color: var(--green-700) !important; margin-bottom: 1px; }
+        .nav-sub-item:hover { background: var(--green-500); !important; color: #fff !important; }
         .nav-sub-item.active { background: var(--green-700) !important; color: #fff !important; }
 
         .sidebar-footer { padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -215,12 +216,11 @@
     <aside class="sidebar" id="sidebar">
 
         <div class="sidebar-logo">
-            <img src="{{ asset('images/arklen-logo.png') }}"
-                 alt="Arklen Agro"
-                 style="width:38px;height:38px;object-fit:contain;flex-shrink:0;">
+            <!-- <img src="{{ asset('images/2apl_logo.svg') }}"
+                 alt="2APL Marketing"
+                 style="width:38px;height:38px;object-fit:contain;flex-shrink:0;"> -->
             <div class="sidebar-logo-text">
-                <strong>Arklen Agro</strong>
-                <span>Pvt. Ltd</span>
+                <strong>2APL Marketing</strong>
             </div>
         </div>
 

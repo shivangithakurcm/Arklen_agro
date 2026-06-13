@@ -22,7 +22,7 @@ class OtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your OTP — Arklen Agro',  // ✅ Subject
+            subject: 'Your OTP — 2APL Marketing',  // ✅ Subject
         );
     }
 

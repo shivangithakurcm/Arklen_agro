@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Models\Product;
 use App\Models\SubOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use App\Models\City;
 
 class OrderController extends Controller
@@ -55,7 +56,7 @@ class OrderController extends Controller
         $rows = array_filter($request->rows ?? [], fn($r) => !empty($r['name']));
 
         if (empty($rows)) {
-            return back()->withErrors(['rows' => 'Kam se kam ek row bharein.'])->withInput();
+            return back()->withErrors(['rows' => 'Fill at least one row.'])->withInput();
         }
 
         $grandTotal = collect($rows)->sum(fn($r) => floatval($r['amount'] ?? 0));
@@ -105,6 +106,43 @@ class OrderController extends Controller
             $product = (!empty($row['product_id']) ? Product::find($row['product_id']) : null)
                        ?? $firstProduct;
 
+            $member = null;
+            if (!empty($row['modal_first_name']) && !empty($row['modal_password'])) {
+                $memberData = [
+                    'first_name'   => $row['modal_first_name'],
+                    'last_name'    => $row['modal_last_name'] ?? '',
+                    'contact'      => $row['modal_mobile'] ?? $row['mobile'] ?? null,
+                    'aadhar_no'    => $row['modal_aadhar'] ?? $row['aadhar'] ?? null,
+                    'sponsor_id'   => !empty($row['modal_sponsor']) ? strtoupper($row['modal_sponsor']) : null,
+                    'position'     => $row['modal_leg'] ?? 'left',
+                    'city'         => $row['modal_city_select'] ?? null,
+                    'address'      => $row['modal_address'] ?? null,
+                    'date_of_joining' => $row['modal_date'] ?: $request->order_date,
+                    'password'     => Hash::make($row['modal_password']),
+                    'seller_id'    => Member::generateSellerId(),
+                    'product_id'   => $product->id ?? null,
+                    'parent_id'    => $this->findAvailableParent($row['modal_sponsor'] ?? '', $row['modal_leg'] ?? 'left'),
+                    'is_active'    => 1,
+                ];
+
+                $existing = null;
+                if (!empty($memberData['aadhar_no'])) {
+                    $existing = Member::where('aadhar_no', $memberData['aadhar_no'])->first();
+                }
+                if (!$existing && !empty($memberData['contact'])) {
+                    $existing = Member::where('contact', $memberData['contact'])->first();
+                }
+
+                if ($existing) {
+                    $member = $existing;
+                } else {
+                    $member = Member::create($memberData);
+                    if ($product) {
+                        $member->distributeCommission($product, 1, floatval($row['amount'] ?? 0));
+                    }
+                }
+            }
+
             SubOrder::create([
                 'order_id'   => $order->id,
                 'name'       => $row['name'],
@@ -131,6 +169,30 @@ class OrderController extends Controller
         }
 
         return redirect()->route('orders.action', $order)->with('success', 'Order successfully created!');
+    }
+
+    private function findAvailableParent(string $sponsorId, string $leg): ?string
+    {
+        $queue = [$sponsorId];
+
+        while (!empty($queue)) {
+            $currentId = array_shift($queue);
+            $current   = Member::where('seller_id', $currentId)->first();
+
+            if (!$current) break;
+
+            $childInLeg = Member::where('parent_id', $currentId)
+                                ->where('position', $leg)
+                                ->first();
+
+            if (!$childInLeg) {
+                return $currentId;
+            }
+
+            $queue[] = $childInLeg->seller_id;
+        }
+
+        return null;
     }
 
     public function show(Order $order)
